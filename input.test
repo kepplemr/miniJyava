@@ -1,0 +1,60 @@
+class Test extends TestThis
+{
+    int test;
+    int[] test2;
+    MyObject heyThere;
+
+    public static void testMeth()
+    {
+        beginvars
+            boolean testing1;
+            String testing2;
+            String[] testing3;
+        endvars
+        heyThere = new MyObject();
+        heyThere.testMethod1(testing1);
+        heyThere.testMethod2(testing2, testing3);
+        heyThere.testMethod3();
+        testing1 = true;
+        // Test arrayAssign
+        testing3[2] = "hey";
+        return true;
+    }
+}
+
+class Test2
+{
+    int tempTest;
+
+    public static int testMeth2(int test2, int test3)
+    {
+        beginvars
+            boolean saved;
+        endvars
+        return false;
+    }
+}
+
+// Test Nullable studd
+class Test3
+{
+    public int anotherTest()
+    {
+        beginvars
+        endvars
+        return 1;
+    }
+}
+
+/* Test more nullable stuff */
+class Test4
+{
+    /*
+    public int deleteMe()
+    {
+        beginvars
+        endvars
+        return true;
+    }
+    */
+}

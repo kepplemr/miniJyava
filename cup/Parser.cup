@@ -1,0 +1,549 @@
+import java.util.*;
+import java.io.*;
+import java_cup.runtime.Symbol;
+import syntaxtree.*;
+scan with {: return lexer.next_token(); :};
+
+parser code 
+{: 
+  public boolean syntaxErrors;
+  mjc_ClassDeclList parsetreeRoot;
+  Lexer lexer;
+  boolean debug;
+
+  public Parser(Lexer lex, boolean debug) 
+  {
+      super(lex);
+      lexer = lex;
+      this.debug = debug;
+  }
+
+  public void report_error(String message, Object info) 
+  {
+    syntaxErrors = true;    
+    System.out.print(message);
+    if ( !(info instanceof Symbol) ) return;
+    Symbol symbol = (Symbol) info;
+    if ( symbol.left < 0 || symbol.right < 0 ) return;
+    System.out.println(" at line "+symbol.left+", column "+symbol.right);
+  }
+:}; 
+
+// TERMINALS
+terminal        BEGINVARS_TOK, BOOLTYPE_TOK, CLASS_TOK, ELSE_TOK, ENDVARS_TOK;
+terminal        EXTENDS_TOK, FALSE_TOK, IF_TOK, INTTYPE_TOK, LENGTH_TOK;
+terminal        NEW_TOK, NULL_TOK, PUBLIC_TOK, RETURN_TOK, STATIC_TOK;
+terminal        STRING_TOK, PRINT_TOK, THIS_TOK, TRUE_TOK, VOID_TOK, WHILE_TOK;
+terminal        LPAREN_TOK, RPAREN_TOK, LBRACE_TOK, RBRACE_TOK, LBRACKET_TOK, RBRACKET_TOK;
+terminal        SEMICOLON_TOK, COMMA_TOK, BANG_TOK, PLUS_TOK, MINUS_TOK, MUL_TOK, DIV_TOK;
+terminal        GT_TOK, LT_TOK, DOT_TOK, ASSIGN_TOK, AND_TOK, EQ_TOK;
+terminal        NEQ_TOK, GTEQ_TOK, LTEQ_TOK;
+terminal String ID_TOK;
+terminal Integer INTCONST_TOK;
+terminal String STRCONST_TOK;
+// NON TERMINALS
+non terminal mjc_ClassDeclList   Program, ClassDeclList;
+non terminal mjc_ClassDecl       ClassDecl;
+non terminal mjc_VarDeclList     KleeneVarDeclList;
+non terminal mjc_VarDeclList     VarDeclList;
+non terminal mjc_VarDecl         VarDecl;
+non terminal mjc_Type            Type;
+non terminal mjc_MethodDeclList  KleeneMethodDeclList;
+non terminal mjc_MethodType      MethodType;
+non terminal mjc_MethodDecl      MethodDecl;
+non terminal mjc_MethodDeclList  MethodDeclList;
+non terminal mjc_FormalList      KleeneFormalList;
+non terminal mjc_Formal          Formal;
+non terminal mjc_FormalList      FormalList;
+non terminal mjc_Statement       Statement;
+non terminal mjc_StatementList   KleeneStatement;
+non terminal mjc_StatementList   StatementList;
+non terminal mjc_Operator        Operator;
+non terminal mjc_Exp             Exp;
+non terminal mjc_ExpList         ExpList;
+non terminal mjc_ExpList         KleeneExpList;
+// Precedence specifications
+precedence left EQ_TOK, NEQ_TOK, GTEQ_TOK, LTEQ_TOK, GT_TOK, LT_TOK;
+precedence left PLUS_TOK, MINUS_TOK;
+precedence left MUL_TOK, DIV_TOK;
+precedence left LBRACKET_TOK, DOT_TOK;
+
+Program ::= ClassDeclList:cdl 
+{: 
+    if (parser.debug) 
+        System.out.println("Program -> ClassDeclList"); 
+    parser.parsetreeRoot = cdl;
+:}
+|
+{:
+    if (parser.debug) 
+        System.out.println("Program -> NULL");
+    parser.parsetreeRoot = new mjc_ClassDeclList();
+:};
+
+ClassDeclList ::= ClassDecl:cd ClassDeclList:cdl
+{: 
+    if (parser.debug) 
+        System.out.println("ClassDeclList -> ClassDecl ClassDeclList");
+    cdl.insertElementAt(cd, 0);
+    RESULT = cdl;
+:}
+| ClassDecl:cd
+{: 
+    if (parser.debug) 
+        System.out.println("ClassDeclList -> ClassDecl"); 
+    RESULT = new mjc_ClassDeclList(cd);
+:};
+
+ClassDecl ::= CLASS_TOK:ct ID_TOK:it LBRACE_TOK KleeneVarDeclList:vd 
+                KleeneMethodDeclList:mdl RBRACE_TOK
+{: 
+    if (parser.debug) 
+        System.out.println("ClassDecl -> class id "); 
+    if (parser.debug) 
+        System.out.println("ident="+it);
+    RESULT = new mjc_ClassDeclSimple(new mjc_Identifier(it), vd, mdl);
+:}
+| CLASS_TOK ID_TOK:c EXTENDS_TOK ID_TOK:p LBRACE_TOK KleeneVarDeclList:vd
+              KleeneMethodDeclList:mdl RBRACE_TOK
+{: 
+    if (parser.debug) 
+        System.out.println("ClassDecl -> class id extends id  "); 
+    if (parser.debug) 
+        System.out.println("ident="+c+" ident="+p);
+    RESULT = new mjc_ClassDeclExtends(new mjc_Identifier(c),new mjc_Identifier(p),vd,mdl);
+:};
+
+KleeneVarDeclList ::= VarDeclList:vdl
+{:
+    if (parser.debug)
+        System.out.println("KleeneVarDeclList -> VarDeclList");
+    RESULT = vdl;
+:}
+|
+{:
+    if (parser.debug)
+        System.out.println("KleeneVarDeclList -> null");
+    RESULT = new mjc_VarDeclList();
+:};
+
+VarDeclList ::= VarDecl:vd VarDeclList:vdl
+{:
+    if (parser.debug) 
+        System.out.println("VarDeclList -> VarDecl VarDeclList");
+    vdl.insertElementAt(vd, 0);
+    RESULT = vdl;
+:}
+| VarDecl:vd 
+{:
+    if (parser.debug) 
+        System.out.println("VarDeclList -> VarDecl");
+    RESULT = new mjc_VarDeclList(vd);
+:};
+
+VarDecl ::= Type:t ID_TOK:i SEMICOLON_TOK
+{: 
+    if (parser.debug) 
+        System.out.println("VarDecl -> Type ID;");
+    RESULT = new mjc_VarDecl(t, new mjc_Identifier(i));
+:};
+
+Type ::= INTTYPE_TOK LBRACKET_TOK RBRACKET_TOK
+{: 
+    if (parser.debug) 
+        System.out.println("Type -> Int[]");
+    RESULT = new mjc_IntArrayType();
+:}
+| BOOLTYPE_TOK
+{:
+    if (parser.debug) 
+        System.out.println("Type -> Boolean");
+    RESULT = new mjc_BooleanType();
+:}
+| INTTYPE_TOK
+{: 
+    if (parser.debug) 
+        System.out.println("Type -> Int");
+    RESULT = new mjc_IntegerType();
+:}
+| STRING_TOK
+{:
+    if (parser.debug) 
+        System.out.println("Type -> String");
+    RESULT = new mjc_StringType();
+:}
+| STRING_TOK LBRACKET_TOK RBRACKET_TOK
+{:
+    if (parser.debug) 
+        System.out.println("Type -> String[]");
+    RESULT = new mjc_StringArrayType();
+:}
+| ID_TOK:i
+{:
+    if (parser.debug) 
+        System.out.println("Type -> IdentifierType");
+    RESULT = new mjc_IdentifierType(i);
+:};
+
+KleeneMethodDeclList ::= MethodDeclList:md
+{:
+    if (parser.debug)
+        System.out.println("KleeneMethodDeclList -> MethodDeclList");
+    RESULT = md;
+:}
+|
+{:
+    if (parser.debug)
+        System.out.println("KleeneMethodDeclList -> Null");
+    RESULT = new mjc_MethodDeclList();
+:};
+
+MethodDeclList ::= MethodDecl:md MethodDeclList:mdl
+{:
+    if (parser.debug) 
+        System.out.println("MethodDeclList -> MethodDecl MethodDeclList");
+    mdl.insertElementAt(md, 0);
+    RESULT = mdl;
+:}
+| MethodDecl:md
+{:
+    if (parser.debug) 
+        System.out.println("MethodDeclList -> MethodDecl");
+    RESULT = new mjc_MethodDeclList(md);
+:};
+
+MethodDecl ::= PUBLIC_TOK STATIC_TOK MethodType:type ID_TOK:id LPAREN_TOK
+               KleeneFormalList:list RPAREN_TOK LBRACE_TOK BEGINVARS_TOK
+               KleeneVarDeclList:vdl ENDVARS_TOK KleeneStatement:kst
+               RETURN_TOK Exp:e SEMICOLON_TOK RBRACE_TOK
+{:
+    if (parser.debug) 
+        System.out.println("MethodDecl -> MethodDeclStatic");
+    RESULT = new mjc_MethodDeclStatic(type, new mjc_Identifier(id), list, vdl, kst, e);
+:}
+| PUBLIC_TOK MethodType:type ID_TOK:id LPAREN_TOK KleeneFormalList:list
+    RPAREN_TOK LBRACE_TOK BEGINVARS_TOK KleeneVarDeclList:vdl ENDVARS_TOK
+    KleeneStatement:kst RETURN_TOK Exp:e SEMICOLON_TOK RBRACE_TOK
+{:
+    if (parser.debug)
+        System.out.println("MethodDecl -> MethodDeclSimple");
+    RESULT = new mjc_MethodDeclSimple(type, new mjc_Identifier(id), list, vdl, kst, e);
+:};
+
+MethodType ::= VOID_TOK
+{:
+    if (parser.debug) 
+        System.out.println("MethodType -> void");
+    RESULT = new mjc_MethodVoidType();
+:}
+| Type:t
+{:
+    if (parser.debug) 
+        System.out.println("MethodType -> MethodReturnType");
+    RESULT = new mjc_MethodReturnType(t);
+:};
+
+Formal ::= Type:t ID_TOK:id
+{:
+    if (parser.debug)
+        System.out.println("Formal -> Type Id");
+    RESULT = new mjc_Formal(t, new mjc_Identifier(id));
+:};
+
+FormalList ::= Formal:f COMMA_TOK FormalList:fl
+{:
+    if (parser.debug)
+        System.out.println("FormalList -> Param");
+    fl.insertElementAt(f, 0);
+    RESULT = fl;
+:}
+| Formal:f
+{:
+    if (parser.debug)
+        System.out.println("FormalList -> Single param");
+    RESULT = new mjc_FormalList(f);
+:};
+
+KleeneFormalList ::= FormalList:fl
+{:
+    if (parser.debug)
+        System.out.println("KleeneFormalList -> FormalList");
+    RESULT = fl;
+:}
+|
+{:
+    if (parser.debug)
+        System.out.println("KleeneFormalList -> Null");
+    RESULT = new mjc_FormalList();
+:};
+
+KleeneStatement ::= StatementList:sl
+{:
+    if (parser.debug)
+        System.out.println("KleeneStatement -> StatementList");
+    RESULT = sl;
+:}
+|
+{:
+    if (parser.debug)
+        System.out.println("KleeneStatement -> Null");
+    RESULT = new mjc_StatementList();
+:};
+
+StatementList ::= Statement:st StatementList:sl
+{:
+    if (parser.debug)
+        System.out.println("StatementList -> Statement StatementList");
+    sl.insertElementAt(st, 0);
+    RESULT = sl;
+:}
+| Statement:st
+{:
+    if (parser.debug)
+        System.out.println("StatementList -> Statement");
+    RESULT = new mjc_StatementList(st);
+:};
+
+// *******STATEMENTS*******
+Statement ::= LBRACE_TOK Statement:s RBRACE_TOK
+{:
+    if (parser.debug)
+        System.out.println("Statement -> { Statement* }");
+    RESULT = s;
+:}
+| IF_TOK LPAREN_TOK Exp:e RPAREN_TOK Statement:s1 ELSE_TOK Statement:s2
+{:
+    if (parser.debug)
+        System.out.println("Statement -> IF / ELSE");
+    RESULT = new mjc_If(e, s1, s2);
+:}
+| WHILE_TOK LPAREN_TOK Exp:e RPAREN_TOK Statement:s1
+{:
+    if (parser.debug)
+        System.out.println("Statement -> While (...) Statement");
+    RESULT = new mjc_While(e, s1);
+:}
+| PRINT_TOK LPAREN_TOK Exp:e RPAREN_TOK SEMICOLON_TOK
+{:
+    if (parser.debug)
+        System.out.println("Statement -> System.out.println(EXP);");
+    RESULT = new mjc_Print(e);
+:}
+| ID_TOK:id ASSIGN_TOK Exp:e SEMICOLON_TOK
+{:
+    if (parser.debug)
+        System.out.println("Statement -> id = EXP;");
+    RESULT = new mjc_Assign(new mjc_Identifier(id), e);
+:}
+| ID_TOK:id LBRACKET_TOK Exp:e1 RBRACKET_TOK ASSIGN_TOK Exp:e2 SEMICOLON_TOK
+{:
+    if (parser.debug)
+        System.out.println("Statement -> id[EXP] = EXP;");
+    RESULT = new mjc_ArrayAssign(new mjc_Identifier(id), e1, e2);
+:}
+| Exp:e DOT_TOK ID_TOK:id LPAREN_TOK KleeneExpList:el RPAREN_TOK SEMICOLON_TOK
+{:
+    if (parser.debug)
+        System.out.println("Statement -> Exp.func(EXPList);");
+    RESULT = new mjc_CallStatement(e, new mjc_Identifier(id), el);
+:};
+
+// *******EXP*******
+Exp ::= Exp:e1 Operator:o Exp:e2
+{:
+    if (parser.debug)
+        System.out.println("Exp -> Exp Operator Exp");
+    if (o instanceof mjc_Op_MUL)
+        RESULT = new mjc_Mult(e1, e2);
+    else if (o instanceof mjc_Op_ADD)
+        RESULT = new mjc_Add(e1, e2);
+    else if (o instanceof mjc_Op_DIV)
+        RESULT = new mjc_Div(e1, e2);
+    else if (o instanceof mjc_Op_MINUS)
+        RESULT = new mjc_Sub(e1, e2);
+    else if (o instanceof mjc_Op_GT)
+        RESULT = new mjc_GT(e1, e2);
+    else if (o instanceof mjc_Op_LT)
+        RESULT = new mjc_LT(e1, e2);
+    else if (o instanceof mjc_Op_EQ)
+        RESULT = new mjc_DoubleEqual(e1, e2);
+    else if (o instanceof mjc_Op_NEQ)
+        RESULT = new mjc_NotEqual(e1, e2);
+    else if (o instanceof mjc_Op_GTEQ)
+        RESULT = new mjc_GTEQ(e1, e2);
+    else if (o instanceof mjc_Op_LTEQ)
+        RESULT = new mjc_LTEQ(e1, e2);
+:}
+| Exp:e1 LBRACKET_TOK Exp:e2 RBRACKET_TOK
+{:
+    if (parser.debug)
+        System.out.println("Exp -> Exp[Exp]");
+    RESULT = new mjc_ArrayLookup(e1, e2);
+:}
+| Exp:e1 DOT_TOK LENGTH_TOK
+{:
+    if (parser.debug)
+        System.out.println("Exp -> EXP.length");
+    RESULT = new mjc_ArrayLength(e1);
+:}
+| Exp:e1 DOT_TOK ID_TOK:id LPAREN_TOK KleeneExpList:kl RPAREN_TOK
+{:
+    if (parser.debug)
+        System.out.println("Exp -> Exp.(...)");
+    RESULT = new mjc_CallExpression(e1, new mjc_Identifier(id), kl);
+:}
+| INTCONST_TOK:ic
+{: 
+    if (parser.debug)
+        System.out.println("Exp -> #Integer constant");
+    RESULT = new mjc_IntegerLiteral(ic);
+:}
+| STRCONST_TOK:sc
+{:
+    if (parser.debug)
+        System.out.println("Exp -> $String constant");
+    RESULT = new mjc_StringLiteral(sc);
+:}
+| TRUE_TOK
+{:
+    if (parser.debug)
+        System.out.println("Exp -> true");
+    RESULT = new mjc_True();
+:}
+| FALSE_TOK
+{: 
+    if (parser.debug)
+        System.out.println("Exp -> false");
+    RESULT = new mjc_False();
+:}
+| NULL_TOK
+{:
+    if (parser.debug)
+        System.out.println("Exp -> null");
+    RESULT = new mjc_Null();
+:}
+| ID_TOK:id
+{:
+    if (parser.debug)
+        System.out.println("Exp -> id");
+    RESULT = new mjc_IdentifierExp(id);
+:}
+| THIS_TOK
+{:
+    if (parser.debug)
+        System.out.println("Exp -> this");
+    RESULT = new mjc_This(new mjc_Identifier("myInstance"));
+:}
+| NEW_TOK INTTYPE_TOK LBRACKET_TOK Exp:e1 RBRACKET_TOK
+{:
+    if (parser.debug)
+        System.out.println("Exp -> new int[EXP]");
+    RESULT = new mjc_NewArray(e1);
+:}
+| NEW_TOK ID_TOK:id LPAREN_TOK RPAREN_TOK
+{:
+    if (parser.debug)
+        System.out.println("Exp -:> new ID[]");
+    RESULT = new mjc_NewObject(new mjc_Identifier(id));
+:}
+| BANG_TOK Exp:e1
+{:
+    if (parser.debug)
+        System.out.println("Exp -> !EXP");
+    RESULT = new mjc_Not(e1);
+:}
+| LPAREN_TOK Exp:e1 RPAREN_TOK
+{:
+    if (parser.debug)
+        System.out.println("Exp -: (EXP)");
+    RESULT = e1;
+:};
+
+ExpList ::= Exp:ex COMMA_TOK ExpList:el
+{:
+    if (parser.debug)
+        System.out.println("ExpList -> Exp ExpList");
+    el.insertElementAt(ex, 0);
+    RESULT = el;
+:}
+| Exp:ex
+{:
+    if (parser.debug)
+        System.out.println("Exp -> Single EXP");
+    RESULT = new mjc_ExpList(ex);
+:};
+
+KleeneExpList ::= ExpList:ex
+{:
+    if (parser.debug)
+        System.out.println("KleeneExpList -> ExpList");
+    RESULT = ex;
+:}
+|
+{:
+    if (parser.debug)
+        System.out.println("KleeneExpList -> Null");
+    RESULT = new mjc_ExpList();
+:};
+
+// *******OPERATOR*******
+Operator ::= MUL_TOK
+{:
+    if (parser.debug)
+        System.out.println("Operator -> *");
+    RESULT = new mjc_Op_MUL();
+:}
+| PLUS_TOK
+{:
+    if (parser.debug)
+        System.out.println("Operator -> +");
+    RESULT = new mjc_Op_ADD();
+:}
+| DIV_TOK
+{:
+    if (parser.debug)
+        System.out.println("Operator -> /");
+    RESULT = new mjc_Op_DIV();
+:}
+| MINUS_TOK
+{:
+    if (parser.debug)
+        System.out.println("Operator -> -");
+    RESULT = new mjc_Op_MINUS();
+:}
+| GT_TOK
+{:
+    if (parser.debug)
+        System.out.println("Operator -> >");
+    RESULT = new mjc_Op_GT();
+:}
+| LT_TOK
+{:
+    if (parser.debug)
+        System.out.println("Operator -> <");
+    RESULT = new mjc_Op_LT();
+:}
+| EQ_TOK
+{:
+    if (parser.debug)
+        System.out.println("Operator -> ==");
+    RESULT = new mjc_Op_EQ();
+:}
+| NEQ_TOK
+{:
+    if (parser.debug)
+        System.out.println("Operator -> !=");
+    RESULT = new mjc_Op_NEQ();
+:}
+| GTEQ_TOK
+{:
+    if (parser.debug)
+        System.out.println("Operator -> >=");
+    RESULT = new mjc_Op_GTEQ();
+:}
+| LTEQ_TOK
+{:
+    if (parser.debug)
+        System.out.println("Operator -> <=");
+    RESULT = new mjc_Op_LTEQ();
+:};
