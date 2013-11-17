@@ -50,7 +50,7 @@ public class Main
 		    interpreter.setErr(out);
 			interpreter.exec("import sys");
 			//interpreter.exec("print(sys.path)");
-			interpreter.exec("from jythonLib.CodeGenVisitor import CodeGenVisitor");
+			interpreter.exec("from codegenvisitor import CodeGenVisitor");
 			//interpreter.exec("print(sys.modules.keys())");
 			PyObject genCode = interpreter.get("CodeGenVisitor");
 			PyObject codeGen = genCode.__call__();
