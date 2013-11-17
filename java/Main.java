@@ -47,6 +47,7 @@ public class Main
 			PythonInterpreter interpreter = new PythonInterpreter();
 		    ByteArrayOutputStream out = new ByteArrayOutputStream();
 		    interpreter.setOut(out);
+		    interpreter.setErr(out);
 			interpreter.exec("import sys");
 			//interpreter.exec("print(sys.path)");
 			interpreter.exec("from jythonLib.CodeGenVisitor import CodeGenVisitor");
