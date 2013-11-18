@@ -10,6 +10,7 @@ from os.path import dirname, realpath, sep, pardir
 temp = sep + pardir + sep + pardir + sep
 sys.path.append(dirname(realpath(__file__)) + temp + "classes")
 import java.util.ArrayList as ArrayList
+import util
 from javacode import *
 from javacode.symbol import *
 from javacode.syntaxtree import *
@@ -81,6 +82,9 @@ class CodeGenVisitor(VisitorAdaptor):
     def visit(self, node):
         print("Encountered MethodDeclStatic")
         self.code = ArrayList()
+        for x in range (0, node.fl.size()):
+            print(node.fl.elementAt(x).t.toString())
+            print(util.typeConvert(node.fl.elementAt(x).t.toString()))
         nameIndex = self.constantPool.getUtf8(node.i.toString())
         typeIndex = self.constantPool.getUtf8(node.t.toString())
         maxLocals = node.fl.size() + node.vl.size()
