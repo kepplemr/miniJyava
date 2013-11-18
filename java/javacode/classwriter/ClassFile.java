@@ -25,7 +25,7 @@ public class ClassFile {
 
     public ClassFile(int me, int parent, ArrayList<CpInfo> cp, ArrayList<FieldInfo> f, ArrayList<MethodInfo> m) {
 	magicNumber = 0xcafebabe;
-	majorVersion = 50;    
+	majorVersion = 51;    
 	minorVersion = 0;
 	cpCount = cp.size();  // extra cpInfo at [0] already there, but won't be written
 	constantPool = cp;

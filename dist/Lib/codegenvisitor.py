@@ -20,6 +20,7 @@ from javacode.classwriter.constantpool import *
 class CodeGenVisitor(VisitorAdaptor):
     # Constants
     ACCESS_PUBLIC = 1
+    ACCESS_PUBLICSTATIC = 9
     CODE_INDEX = 7
     MAX_STACK = 512
     # Class fields
@@ -29,16 +30,25 @@ class CodeGenVisitor(VisitorAdaptor):
     methodList = ArrayList()
     code = ArrayList()
     
-    # Constructor
-    def __init__(self):
-        print("Created, yo")  
-        
+    """ Add default <init> constructor """
+    def addInit(self):
+        self.code = ArrayList()
+        # aload_0
+        self.code.add(0x2a)
+        # invokespecial #1
+        self.code.add(0xb7)
+        self.code.add(0x00)
+        self.code.add(0x06)
+        # return
+        self.code.add(0xb1)
+        init = MethodInfo(0, 3, 4, 7, self.code.size()+12, 512, 512, self.code)
+        self.methodList.add(init)
+
+    """ Generic method to initialize dynamic dispatcher """        
     @vis.on('node')
     def visit(self, node):
-        """
-        This is the generic method that initializes the
-        dynamic dispatcher.
-        """
+        pass
+
     @vis.when(mjc_VarDecl)
     def visit(self, node):
         print("Encountered VarDecl")
@@ -50,6 +60,7 @@ class CodeGenVisitor(VisitorAdaptor):
     @vis.when(mjc_Print)
     def visit(self, node):
         print("Print statement encountered")
+        self.code = ArrayList()
         # b2 = getstatic opcode
         self.code.add(0xb2)
         # out -> CP(13)
@@ -63,7 +74,7 @@ class CodeGenVisitor(VisitorAdaptor):
         self.code.add(0xb6)
         # cp index to println
         self.code.add(0x00)
-        self.code.add(0x03)
+        self.code.add(0x13)
         # empty return opcode
         self.code.add(0xb1)
         
@@ -82,15 +93,21 @@ class CodeGenVisitor(VisitorAdaptor):
     def visit(self, node):
         print("Encountered MethodDeclStatic")
         self.code = ArrayList()
+        type = "("
         for x in range (0, node.fl.size()):
-            print(node.fl.elementAt(x).t.toString())
-            print(util.typeConvert(node.fl.elementAt(x).t.toString()))
-        nameIndex = self.constantPool.getUtf8(node.i.toString())
-        typeIndex = self.constantPool.getUtf8(node.t.toString())
+            type += util.typeConvert(node.fl.elementAt(x).t.toString())
+        type += ")"
+        type += util.typeConvert(node.t.toString())
+        nameIndex = self.constantPool.getUtf8(util.typeConvert(node.i.toString()))
+        typeIndex = self.constantPool.getUtf8(type)
+        print("Typeindex -> " + repr(typeIndex))
         maxLocals = node.fl.size() + node.vl.size()
+        print("Maxlocals -> " + repr(maxLocals))
         for x in range(0, node.sl.size()):
             node.sl.elementAt(x).accept(self)
-        method = MethodInfo(self.ACCESS_PUBLIC, nameIndex, typeIndex, self.CODE_INDEX, self.code.size()+12, self.MAX_STACK, maxLocals, self.code)
+        print("Attribute length -> " + repr(self.code.size()+12))
+        print("Method type -> " + type)
+        method = MethodInfo(self.ACCESS_PUBLICSTATIC, nameIndex, 27, self.CODE_INDEX, self.code.size()+12, self.MAX_STACK, 512, self.code)
         self.methodList.add(method)
         
     @vis.when(mjc_ClassDeclSimple)
@@ -101,6 +118,7 @@ class CodeGenVisitor(VisitorAdaptor):
         self.methodList = ArrayList()
         self.constantPool.clearConstantPool()
         self.constantPool.createPrintLineEntries()
+        self.addInit()
         # Handle class fields
         for x in range(0, node.vl.size()):
             node.vl.elementAt(x).accept(self)
@@ -118,6 +136,7 @@ class CodeGenVisitor(VisitorAdaptor):
         self.methodList = ArrayList()
         self.constantPool.clearConstantPool()
         self.constantPool.createPrintLineEntries()
+        #self.addInit()
         # Handle class fields
         for x in range(0, node.vl.size()):
             node.vl.elementAt(x).accept(self)
