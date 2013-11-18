@@ -1,3 +1,4 @@
+package javacode;
 import java_cup.runtime.*;
 
 %%

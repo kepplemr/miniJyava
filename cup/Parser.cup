@@ -1,7 +1,8 @@
+package javacode;
 import java.util.*;
 import java.io.*;
 import java_cup.runtime.Symbol;
-import syntaxtree.*;
+import javacode.syntaxtree.*;
 scan with {: return lexer.next_token(); :};
 
 parser code 

@@ -1,22 +1,4 @@
-package syntaxtree;
-
-/* This is a classgen file.  From this file the Classgen framework
-   will automatically generate every node in your syntax tree.
-
-   The file format is fairly simple.  There are a few descriptive
-   comments in this file to help you, dear reader, understand the
-   file.  For a more detailed treatment, please see the classgen
-   website: http://classgen.sourceforge.net/docs/lang1.html
-
-*/
-
-/*
-  This stanza declares the class mjc_ClassDecl with two subclasses.
-
-  Note "mjc_ClassDecl" is in quotes.  If it were not in quotes,
-  Classgen would rename the file to Mjc_ClassDecl to comply with
-  Java's naming conventions.
-*/
+package javacode.syntaxtree;
 
 "mjc_ClassDecl" ::= 	{"mjc_ClassDeclExtends"} /* Declaring a subclass */
                                 "mjc_Identifier":i  
