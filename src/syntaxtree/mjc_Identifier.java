@@ -4,50 +4,52 @@
  */
 package javacode.syntaxtree;
 
-public class mjc_Identifier implements SyntaxNode {
+public class mjc_Identifier implements SyntaxNode 
+{
+	private SyntaxNode parent;
+	public String s;
 
-  private SyntaxNode parent;
-  public String s;
+	public mjc_Identifier(String s) 
+	{
+		this.s = s;
+	}
 
-  public mjc_Identifier (String s) {
-    this.s = s;
-  }
+	public SyntaxNode getParent() 
+	{
+		return parent;
+	}
 
-  public SyntaxNode getParent() {
-    return parent;
-  }
+	public void setParent(SyntaxNode parent) 
+	{
+		this.parent = parent;
+	}
 
-  public void setParent(SyntaxNode parent) {
-    this.parent = parent;
-  }
+	public void accept(Visitor visitor) 
+	{
+		visitor.visit(this);
+	}
 
-  public void accept(Visitor visitor) {
-    visitor.visit(this);
-  }
+	public void childrenAccept(Visitor visitor) 
+	{
+	}
 
-  public void childrenAccept(Visitor visitor) {
-  }
+	public void traverseTopDown(Visitor visitor) 
+	{
+		accept(visitor);
+	}
 
-  public void traverseTopDown(Visitor visitor) {
-    accept(visitor);
-  }
+	public void traverseBottomUp(Visitor visitor) 
+	{
+		accept(visitor);
+	}
 
-  public void traverseBottomUp(Visitor visitor) {
-    accept(visitor);
-  }
+	public String toString() 
+	{
+		return s;
+	}
 
-  public String toString() {
-    return toString("");
-  }
-
-  public String toString(String tab) {
-    StringBuffer buffer = new StringBuffer();
-    buffer.append(tab);
-    buffer.append("mjc_Identifier(\n");
-    buffer.append("  "+tab+s);
-    buffer.append("\n");
-    buffer.append(tab);
-    buffer.append(") [mjc_Identifier]");
-    return buffer.toString();
-  }
+	public String toString(String tab) 
+	{
+		return s;
+	}
 }

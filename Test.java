@@ -1,10 +1,7 @@
-class Test extends TestThis
+class Test
 {
     public static void main(String[] args)
     {
-        beginvars
-        endvars
         System.out.println(42);
-        return 0;
     }
 }
