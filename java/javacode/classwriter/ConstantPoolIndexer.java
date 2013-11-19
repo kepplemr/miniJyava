@@ -57,6 +57,7 @@ public class ConstantPoolIndexer {
         getMethodInfo("java/io/PrintStream", "println", "(Z)V");  // 22
         getMethodInfo("java/io/PrintStream", "println", 
 		                       "(Ljava/lang/String;)V");  // 25
+        getInteger(42); // 26
     }
 
     public ArrayList<CpInfo> getCPClone() {
