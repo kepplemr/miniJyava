@@ -9,6 +9,10 @@ class Test
             String testString;
         endvars
         {
+            System.out.println(1+2);
+            System.out.println(4-2);
+            System.out.println(7*7);
+            System.out.println(49/7);
             testInt = 152;
             testString = "testMe";
         }

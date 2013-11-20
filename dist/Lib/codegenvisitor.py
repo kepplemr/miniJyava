@@ -23,8 +23,9 @@ class CodeGenVisitor(VisitorAdaptor):
     ACCESS_PUBLIC = 1
     EXP_INTINDEX = 2
     EXP_STRINDEX = 3
-    EXP_IMMVALUE = 4
-    EXP_IMMSTRING = 5
+    EXP_LOCINTIND = 4
+    EXP_LOCSTRIND = 5
+    EXP_IMMINTVAL = 6
     ACCESS_PUBLICSTATIC = 9
     CODE_INDEX = 7
     MAX_STACK = 512
@@ -72,7 +73,59 @@ class CodeGenVisitor(VisitorAdaptor):
         field = FieldInfo(self.ACCESS_PUBLIC, nameIndex, typeIndex)
         self.fieldList.add(field)
        
-    """ EXP visitor methods """ 
+    """ EXP visitor methods """
+    @vis.when(mjc_Add)
+    def visit(self, node):
+        self.expIndex = 0
+        node.e1.accept(self)
+        self.code.add(0x12)
+        self.code.add(self.expIndex)
+        node.e2.accept(self)
+        self.code.add(0x12)
+        self.code.add(self.expIndex)
+        # iadd 
+        self.code.add(0x60)  
+        self.expType = self.EXP_IMMINTVAL
+        
+    @vis.when(mjc_Sub)
+    def visit(self, node):
+        self.expIndex = 0
+        node.e1.accept(self)
+        self.code.add(0x12)
+        self.code.add(self.expIndex)
+        node.e2.accept(self)
+        self.code.add(0x12)
+        self.code.add(self.expIndex)
+        # isub 
+        self.code.add(0x64)  
+        self.expType = self.EXP_IMMINTVAL
+        
+    @vis.when(mjc_Mult)
+    def visit(self, node):
+        self.expIndex = 0
+        node.e1.accept(self)
+        self.code.add(0x12)
+        self.code.add(self.expIndex)
+        node.e2.accept(self)
+        self.code.add(0x12)
+        self.code.add(self.expIndex)
+        # imul
+        self.code.add(0x68)  
+        self.expType = self.EXP_IMMINTVAL
+        
+    @vis.when(mjc_Div)
+    def visit(self, node):
+        self.expIndex = 0
+        node.e1.accept(self)
+        self.code.add(0x12)
+        self.code.add(self.expIndex)
+        node.e2.accept(self)
+        self.code.add(0x12)
+        self.code.add(self.expIndex)
+        # idiv
+        self.code.add(0x6c)  
+        self.expType = self.EXP_IMMINTVAL
+        
     @vis.when(mjc_IntegerLiteral)
     def visit(self, node):
         self.expType = self.EXP_INTINDEX
@@ -105,9 +158,9 @@ class CodeGenVisitor(VisitorAdaptor):
         methFieldType = util.typeConvert(methFieldEntry.getType().toString())
         self.expIndex = methFieldEntry.getLocation()
         if methFieldType == "I":
-            self.expType = self.EXP_IMMVALUE
+            self.expType = self.EXP_LOCINTIND
         elif methFieldType == "Ljava/lang/String;":
-            self.expType = self.EXP_IMMSTRING
+            self.expType = self.EXP_LOCSTRIND
     
     """ Statement visitor methods """
     @vis.when(mjc_Block)
@@ -117,12 +170,12 @@ class CodeGenVisitor(VisitorAdaptor):
             
     @vis.when(mjc_Print)
     def visit(self, node):
-        # handle EXP to print
-        node.e.accept(self)
         # getstatic 'out'
         self.code.add(0xb2)
         self.code.add(0x00)
         self.code.add(0x0d)
+        # handle EXP to print
+        node.e.accept(self)
         if self.expType == self.EXP_INTINDEX:
             # ldc & index
             self.code.add(0x12)
@@ -140,7 +193,12 @@ class CodeGenVisitor(VisitorAdaptor):
             self.code.add(0xb6)
             self.code.add(0x00)
             self.code.add(0x19)
-        elif self.expType == self.EXP_IMMVALUE:
+        elif self.expType == self.EXP_IMMINTVAL:
+            # invokevirtual 'println'
+            self.code.add(0xb6)
+            self.code.add(0x00)
+            self.code.add(0x13)
+        elif self.expType == self.EXP_LOCINTIND:
             # iload <local>
             self.code.add(0x15)
             self.code.add(self.expIndex)
@@ -148,7 +206,7 @@ class CodeGenVisitor(VisitorAdaptor):
             self.code.add(0xb6)
             self.code.add(0x00)
             self.code.add(0x13)
-        elif self.expType == self.EXP_IMMSTRING:
+        elif self.expType == self.EXP_LOCSTRIND:
             # aload <local>
             self.code.add(0x19)
             self.code.add(self.expIndex)
