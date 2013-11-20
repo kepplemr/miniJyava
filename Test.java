@@ -2,6 +2,8 @@ class Test
 {
     public static void main(String [] args)
     {
-        System.out.println(2+8);
+        int i = 2;
+        int j = 3;
+        System.out.println(i > j);
     }
 }

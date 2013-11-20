@@ -13,6 +13,7 @@ class Test
             System.out.println(4-2);
             System.out.println(7*7);
             System.out.println(49/7);
+            System.out.println(6 > 5);
             testInt = 152;
             testString = "testMe";
         }

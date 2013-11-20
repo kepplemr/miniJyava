@@ -26,6 +26,7 @@ class CodeGenVisitor(VisitorAdaptor):
     EXP_LOCINTIND = 4
     EXP_LOCSTRIND = 5
     EXP_IMMINTVAL = 6
+    EXP_BOOLVAL = 7
     ACCESS_PUBLICSTATIC = 9
     CODE_INDEX = 7
     MAX_STACK = 512
@@ -77,6 +78,7 @@ class CodeGenVisitor(VisitorAdaptor):
     @vis.when(mjc_Add)
     def visit(self, node):
         self.expIndex = 0
+        # push both EXP's to stack
         node.e1.accept(self)
         self.code.add(0x12)
         self.code.add(self.expIndex)
@@ -90,6 +92,7 @@ class CodeGenVisitor(VisitorAdaptor):
     @vis.when(mjc_Sub)
     def visit(self, node):
         self.expIndex = 0
+        # push both EXP's to stack
         node.e1.accept(self)
         self.code.add(0x12)
         self.code.add(self.expIndex)
@@ -103,6 +106,7 @@ class CodeGenVisitor(VisitorAdaptor):
     @vis.when(mjc_Mult)
     def visit(self, node):
         self.expIndex = 0
+        # push both EXP's to stack
         node.e1.accept(self)
         self.code.add(0x12)
         self.code.add(self.expIndex)
@@ -116,6 +120,7 @@ class CodeGenVisitor(VisitorAdaptor):
     @vis.when(mjc_Div)
     def visit(self, node):
         self.expIndex = 0
+        # push both EXP's to stack
         node.e1.accept(self)
         self.code.add(0x12)
         self.code.add(self.expIndex)
@@ -125,6 +130,32 @@ class CodeGenVisitor(VisitorAdaptor):
         # idiv
         self.code.add(0x6c)  
         self.expType = self.EXP_IMMINTVAL
+    
+    @vis.when(mjc_GT)
+    def visit(self, node):
+        self.expIndex = 0
+        # push both EXP's to stack
+        node.e1.accept(self)
+        self.code.add(0x12)
+        self.code.add(self.expIndex)
+        node.e2.accept(self)
+        self.code.add(0x12)
+        self.code.add(self.expIndex)
+        # if_icmpgt -> (branch + 8)
+        self.code.add(0xa3)
+        self.code.add(0x00)
+        self.code.add(0x08)
+        # bipush 0
+        self.code.add(0x10)
+        self.code.add(0x00)
+        # goto -> (branch + 5)
+        self.code.add(0xa7)
+        self.code.add(0x00)
+        self.code.add(0x05)
+        # bipush 1
+        self.code.add(0x10)
+        self.code.add(0x01)
+        self.expType = self.EXP_BOOLVAL
         
     @vis.when(mjc_IntegerLiteral)
     def visit(self, node):
@@ -138,13 +169,19 @@ class CodeGenVisitor(VisitorAdaptor):
     
     @vis.when(mjc_True)
     def visit(self, node):
-        self.expType = self.EXP_STRINDEX
-        self.expIndex = self.constantPool.getString("true")
+        self.expType = self.EXP_BOOLVAL
+        self.expIndex = 0
+        # bipush 1
+        self.code.add(0x10)
+        self.code.add(0x01)
     
     @vis.when(mjc_False)
     def visit(self, node):
-        self.expType = self.EXP_STRINDEX
-        self.expIndex = self.constantPool.getString("false")
+        self.expType = self.EXP_BOOLVAL
+        self.expIndex = 0
+        #bipush 0
+        self.code.add(0x10)
+        self.code.add(0x00)
         
     @vis.when(mjc_Null)
     def visit(self, node):
@@ -180,8 +217,7 @@ class CodeGenVisitor(VisitorAdaptor):
             # ldc & index
             self.code.add(0x12)
             self.code.add(self.expIndex)
-            print("Int index -> " + repr(self.expIndex))
-            # invokevirtual 'println'
+            # invokevirtual 'println(CP_IntIndex)'
             self.code.add(0xb6)
             self.code.add(0x00)
             self.code.add(0x13)
@@ -189,12 +225,12 @@ class CodeGenVisitor(VisitorAdaptor):
             # ldc & index
             self.code.add(0x12)
             self.code.add(self.expIndex)
-            # invokevirtual 'println'
+            # invokevirtual 'println(CP_StrIndex)'
             self.code.add(0xb6)
             self.code.add(0x00)
             self.code.add(0x19)
         elif self.expType == self.EXP_IMMINTVAL:
-            # invokevirtual 'println'
+            # invokevirtual 'println(42)'
             self.code.add(0xb6)
             self.code.add(0x00)
             self.code.add(0x13)
@@ -202,7 +238,7 @@ class CodeGenVisitor(VisitorAdaptor):
             # iload <local>
             self.code.add(0x15)
             self.code.add(self.expIndex)
-            # invokevirtual 'println'
+            # invokevirtual 'println(int i)
             self.code.add(0xb6)
             self.code.add(0x00)
             self.code.add(0x13)
@@ -210,10 +246,15 @@ class CodeGenVisitor(VisitorAdaptor):
             # aload <local>
             self.code.add(0x19)
             self.code.add(self.expIndex)
-            # invokevirtual 'println'
+            # invokevirtual 'println(String str)'
             self.code.add(0xb6)
             self.code.add(0x00)
             self.code.add(0x19)
+        elif self.expType == self.EXP_BOOLVAL:
+            # invokevirtual 'println(boolean)'
+            self.code.add(0xb6)
+            self.code.add(0x00)
+            self.code.add(0x16)
             
     @vis.when(mjc_Assign)
     def visit(self, node):
