@@ -37,7 +37,7 @@ public class Main
 		}
 		try 
 		{
-			Parser p = new Parser(scanner, true); // debug printfs: true/false
+			Parser p = new Parser(scanner, false);
 			p.parse();	
 			SymTabVisitor sv = new SymTabVisitor();
 			p.parsetreeRoot.accept(sv);
