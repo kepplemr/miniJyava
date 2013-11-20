@@ -306,11 +306,11 @@ StatementList ::= Statement:st StatementList:sl
 :};
 
 // *******STATEMENTS*******
-Statement ::= LBRACE_TOK Statement:s RBRACE_TOK
+Statement ::= LBRACE_TOK KleeneStatement:s RBRACE_TOK
 {:
     if (parser.debug)
-        System.out.println("Statement -> { Statement* }");
-    RESULT = s;
+        System.out.println("Statement -> { KleeneStatement* }");
+    RESULT = new mjc_Block(s);
 :}
 | IF_TOK LPAREN_TOK Exp:e RPAREN_TOK Statement:s1 ELSE_TOK Statement:s2
 {:

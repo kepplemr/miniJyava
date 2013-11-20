@@ -107,7 +107,13 @@ class CodeGenVisitor(VisitorAdaptor):
             self.expType = self.EXP_IMMVALUE
         elif methFieldType == "Ljava/lang/String;":
             self.expType = self.EXP_IMMSTRING
-           
+    
+    """ Statement visitor methods """
+    @vis.when(mjc_Block)
+    def visit(self, node):
+        for x in range(0, node.sl.size()):
+            node.sl.elementAt(x).accept(self)
+            
     @vis.when(mjc_Print)
     def visit(self, node):
         # handle EXP to print
@@ -135,8 +141,6 @@ class CodeGenVisitor(VisitorAdaptor):
             self.code.add(0x19)
         elif self.expType == self.EXP_IMMVALUE:
             # iload <local>
-            #self.code.add(0x12)
-            #self.code.add(0x1f)
             self.code.add(0x15)
             self.code.add(self.expIndex)
             # invokevirtual 'println'
@@ -170,7 +174,8 @@ class CodeGenVisitor(VisitorAdaptor):
             # astore <location>
             self.code.add(0x3a)
             self.code.add(location)
-        
+    
+    """ Method visitor methods """
     @vis.when(mjc_MethodDeclSimple)
     def visit(self, node):
         # Set method symbol marker
@@ -212,7 +217,8 @@ class CodeGenVisitor(VisitorAdaptor):
         self.code.add(0xb1)
         method = MethodInfo(self.ACCESS_PUBLICSTATIC, nameIndex, typeIndex, self.CODE_INDEX, self.code.size()+12, self.MAX_STACK, maxLocals, self.code)
         self.methodList.add(method)
-        
+    
+    """ Class visitor methods """   
     @vis.when(mjc_ClassDeclSimple)
     def visit(self,node):
         # Set class symbol marker

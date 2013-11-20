@@ -8,8 +8,10 @@ class Test
             int testInt;
             String testString;
         endvars
-        testInt = 152;
-        testString = "testMe";
+        {
+            testInt = 152;
+            testString = "testMe";
+        }
         System.out.println(testInt);
         System.out.println(testString);
         System.out.println("testing");
