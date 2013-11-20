@@ -71,7 +71,8 @@ class CodeGenVisitor(VisitorAdaptor):
         typeIndex = self.constantPool.getUtf8(node.t.toString())
         field = FieldInfo(self.ACCESS_PUBLIC, nameIndex, typeIndex)
         self.fieldList.add(field)
-        
+       
+    """ EXP visitor methods """ 
     @vis.when(mjc_IntegerLiteral)
     def visit(self, node):
         self.expType = self.EXP_INTINDEX

@@ -350,30 +350,65 @@ Statement ::= LBRACE_TOK KleeneStatement:s RBRACE_TOK
 :};
 
 // *******EXP*******
-Exp ::= Exp:e1 Operator:o Exp:e2
+Exp ::= Exp:e1 MUL_TOK Exp:e2
 {:
     if (parser.debug)
-        System.out.println("Exp -> Exp Operator Exp");
-    if (o instanceof mjc_Op_MUL)
-        RESULT = new mjc_Mult(e1, e2);
-    else if (o instanceof mjc_Op_ADD)
-        RESULT = new mjc_Add(e1, e2);
-    else if (o instanceof mjc_Op_DIV)
-        RESULT = new mjc_Div(e1, e2);
-    else if (o instanceof mjc_Op_MINUS)
-        RESULT = new mjc_Sub(e1, e2);
-    else if (o instanceof mjc_Op_GT)
-        RESULT = new mjc_GT(e1, e2);
-    else if (o instanceof mjc_Op_LT)
-        RESULT = new mjc_LT(e1, e2);
-    else if (o instanceof mjc_Op_EQ)
-        RESULT = new mjc_DoubleEqual(e1, e2);
-    else if (o instanceof mjc_Op_NEQ)
-        RESULT = new mjc_NotEqual(e1, e2);
-    else if (o instanceof mjc_Op_GTEQ)
-        RESULT = new mjc_GTEQ(e1, e2);
-    else if (o instanceof mjc_Op_LTEQ)
-        RESULT = new mjc_LTEQ(e1, e2);
+        System.out.println("Exp -> Exp * Exp");
+    RESULT = new mjc_Mult(e1, e2);
+:}
+| Exp:e1 PLUS_TOK Exp:e2
+{:
+    if (parser.debug)
+        System.out.println("Exp -> Exp + Exp");
+    RESULT = new mjc_Add(e1, e2);
+:}
+| Exp:e1 DIV_TOK Exp:e2
+{:
+    if (parser.debug)
+        System.out.println("Exp -> Exp / Exp");
+    RESULT = new mjc_Div(e1, e2);
+:}
+| Exp:e1 MINUS_TOK Exp:e2
+{:
+    if (parser.debug)
+        System.out.println("Exp -> Exp - Exp");
+    RESULT = new mjc_Sub(e1, e2);
+:}
+| Exp:e1 GT_TOK Exp:e2
+{:
+    if (parser.debug)
+        System.out.println("Exp -> Exp > Exp");
+    RESULT = new mjc_GT(e1, e2);
+:}
+| Exp:e1 LT_TOK Exp:e2
+{:
+    if (parser.debug)
+        System.out.println("Exp -> Exp < Exp");
+    RESULT = new mjc_LT(e1, e2);
+:}
+| Exp:e1 EQ_TOK Exp:e2
+{:
+    if (parser.debug)
+        System.out.println("Exp -> Exp == Exp");
+    RESULT = new mjc_DoubleEqual(e1, e2);
+:}
+| Exp:e1 NEQ_TOK Exp:e2
+{:
+    if (parser.debug)
+        System.out.println("Exp -> Exp != Exp");
+    RESULT = new mjc_NotEqual(e1, e2);
+:}
+| Exp:e1 GTEQ_TOK Exp:e2
+{:
+    if (parser.debug)
+        System.out.println("Exp -> Exp >= Exp");
+    RESULT = new mjc_GTEQ(e1, e2);
+:}
+| Exp:e1 LTEQ_TOK Exp:e2
+{:
+    if (parser.debug)
+        System.out.println("Exp -> Exp <= Exp");
+    RESULT = new mjc_LTEQ(e1, e2);
 :}
 | Exp:e1 LBRACKET_TOK Exp:e2 RBRACKET_TOK
 {:
@@ -485,66 +520,4 @@ KleeneExpList ::= ExpList:ex
     if (parser.debug)
         System.out.println("KleeneExpList -> Null");
     RESULT = new mjc_ExpList();
-:};
-
-// *******OPERATOR*******
-Operator ::= MUL_TOK
-{:
-    if (parser.debug)
-        System.out.println("Operator -> *");
-    RESULT = new mjc_Op_MUL();
-:}
-| PLUS_TOK
-{:
-    if (parser.debug)
-        System.out.println("Operator -> +");
-    RESULT = new mjc_Op_ADD();
-:}
-| DIV_TOK
-{:
-    if (parser.debug)
-        System.out.println("Operator -> /");
-    RESULT = new mjc_Op_DIV();
-:}
-| MINUS_TOK
-{:
-    if (parser.debug)
-        System.out.println("Operator -> -");
-    RESULT = new mjc_Op_MINUS();
-:}
-| GT_TOK
-{:
-    if (parser.debug)
-        System.out.println("Operator -> >");
-    RESULT = new mjc_Op_GT();
-:}
-| LT_TOK
-{:
-    if (parser.debug)
-        System.out.println("Operator -> <");
-    RESULT = new mjc_Op_LT();
-:}
-| EQ_TOK
-{:
-    if (parser.debug)
-        System.out.println("Operator -> ==");
-    RESULT = new mjc_Op_EQ();
-:}
-| NEQ_TOK
-{:
-    if (parser.debug)
-        System.out.println("Operator -> !=");
-    RESULT = new mjc_Op_NEQ();
-:}
-| GTEQ_TOK
-{:
-    if (parser.debug)
-        System.out.println("Operator -> >=");
-    RESULT = new mjc_Op_GTEQ();
-:}
-| LTEQ_TOK
-{:
-    if (parser.debug)
-        System.out.println("Operator -> <=");
-    RESULT = new mjc_Op_LTEQ();
 :};

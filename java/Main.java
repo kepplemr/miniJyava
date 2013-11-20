@@ -30,11 +30,6 @@ public class Main
 			System.out.println("File not found : \"" + argv[0] + "\"");
 			System.exit(1);
 		} 
-		catch (java.io.IOException e) 
-		{
-			System.out.println("Error opening file \"" + argv[0] + "\"");
-			System.exit(1);
-		} 
 		catch (ArrayIndexOutOfBoundsException e) 
 		{
 			System.out.println("Usage : java Main <inputfile>");

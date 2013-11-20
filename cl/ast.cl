@@ -138,17 +138,6 @@ package javacode.syntaxtree;
 "mjc_VarDecl" ::=	"mjc_Type":t
 			"mjc_Identifier":i
 
-"mjc_Operator" ::=      {"mjc_Op_LTEQ"}
-               |        {"mjc_Op_GTEQ"}
-               |        {"mjc_Op_NEQ"}
-               |        {"mjc_Op_EQ"}
-               |        {"mjc_Op_LT"}
-               |        {"mjc_Op_GT"}
-               |        {"mjc_Op_MINUS"}
-               |        {"mjc_Op_DIV"}
-               |        {"mjc_Op_MUL"}
-               |        {"mjc_Op_ADD"}
-
 /*  Below are all lists, notice the * being used like a kleene
     closure */
 
