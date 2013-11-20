@@ -19,6 +19,11 @@ public class FieldEntry extends Entry {
     {
     	this.location = location;
     }
+    
+    public int getLocation()
+    {
+    	return this.location;
+    }
 
     public String toString()
     {

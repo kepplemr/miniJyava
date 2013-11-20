@@ -3,8 +3,15 @@ class Test
     public static void main(String[] args)
     {
         beginvars
+            int locationZero;
+            int locationOne;
             int testInt;
+            String testString;
         endvars
+        testInt = 152;
+        testString = "testMe";
+        System.out.println(testInt);
+        System.out.println(testString);
         System.out.println("testing");
         System.out.println(140);
         System.out.println(true);

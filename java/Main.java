@@ -43,7 +43,9 @@ public class Main
 		try 
 		{
 			Parser p = new Parser(scanner, true); // debug printfs: true/false
-			p.parse();			
+			p.parse();	
+			SymTabVisitor sv = new SymTabVisitor();
+			p.parsetreeRoot.accept(sv);
 			PythonInterpreter interpreter = new PythonInterpreter();
 		    ByteArrayOutputStream out = new ByteArrayOutputStream();
 		    interpreter.setOut(out);

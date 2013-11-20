@@ -21,11 +21,20 @@ from javacode.classwriter.constantpool import *
 class CodeGenVisitor(VisitorAdaptor):
     # Constants
     ACCESS_PUBLIC = 1
+    EXP_INTINDEX = 2
+    EXP_STRINDEX = 3
+    EXP_IMMVALUE = 4
+    EXP_IMMSTRING = 5
     ACCESS_PUBLICSTATIC = 9
     CODE_INDEX = 7
     MAX_STACK = 512
     
+    # Symbol markers
+    classSym = Symbol.symbol("")
+    methodSym = Symbol.symbol("")
+    
     # Class fields
+    symTab = Table.getInstance()
     codeGen = CodeGenerator()
     constantPool = ConstantPoolIndexer()
     fieldList = ArrayList()
@@ -33,8 +42,8 @@ class CodeGenVisitor(VisitorAdaptor):
     code = ArrayList()
     
     # Index's
-    printIntIndex = 0
-    printStrIndex = 0
+    expType = 0
+    expIndex = 0
     
     """ Add default <init> constructor """
     def addInit(self):
@@ -63,61 +72,109 @@ class CodeGenVisitor(VisitorAdaptor):
         field = FieldInfo(self.ACCESS_PUBLIC, nameIndex, typeIndex)
         self.fieldList.add(field)
         
-    
     @vis.when(mjc_IntegerLiteral)
     def visit(self, node):
-        self.printStrIndex = 0
-        self.printIntIndex = self.constantPool.getInteger(node.i)
+        self.expType = self.EXP_INTINDEX
+        self.expIndex = self.constantPool.getInteger(node.i)
         
     @vis.when(mjc_StringLiteral)
     def visit(self, node):
-        self.printIntIndex = 0
-        self.printStrIndex = self.constantPool.getString(node.s)
+        self.expType = self.EXP_STRINDEX
+        self.expIndex = self.constantPool.getString(node.s)
     
     @vis.when(mjc_True)
     def visit(self, node):
-        self.printIntIndex = 0
-        self.printStrIndex = self.constantPool.getString("true")
+        self.expType = self.EXP_STRINDEX
+        self.expIndex = self.constantPool.getString("true")
     
     @vis.when(mjc_False)
     def visit(self, node):
-        self.printIntIndex = 0
-        self.printStrIndex = self.constantPool.getString("false")
+        self.expType = self.EXP_STRINDEX
+        self.expIndex = self.constantPool.getString("false")
         
     @vis.when(mjc_Null)
     def visit(self, node):
-        self.printIntIndex = 0
-        self.printStrIndex = self.constantPool.getString("null") 
+        self.expType = self.EXP_STRINDEX
+        self.expIndex = self.constantPool.getString("null") 
         
+    @vis.when(mjc_IdentifierExp)
+    def visit(self, node):
+        currSym = Symbol.symbol(mjc_Identifier(node.s).toString())
+        methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
+        methFieldType = util.typeConvert(methFieldEntry.getType().toString())
+        self.expIndex = methFieldEntry.getLocation()
+        if methFieldType == "I":
+            self.expType = self.EXP_IMMVALUE
+        elif methFieldType == "Ljava/lang/String;":
+            self.expType = self.EXP_IMMSTRING
+           
     @vis.when(mjc_Print)
     def visit(self, node):
         # handle EXP to print
         node.e.accept(self)
-        print("printIntIndex -> " + repr(self.printIntIndex))
-        print("printStrIndex -> " + repr(self.printStrIndex))
         # getstatic 'out'
         self.code.add(0xb2)
         self.code.add(0x00)
         self.code.add(0x0d)
-        if self.printIntIndex != 0:
+        if self.expType == self.EXP_INTINDEX:
             # ldc & index
             self.code.add(0x12)
-            self.code.add(self.printIntIndex)
+            self.code.add(self.expIndex)
+            print("Int index -> " + repr(self.expIndex))
             # invokevirtual 'println'
             self.code.add(0xb6)
             self.code.add(0x00)
             self.code.add(0x13)
-        elif self.printStrIndex != 0:
+        elif self.expType == self.EXP_STRINDEX:
             # ldc & index
             self.code.add(0x12)
-            self.code.add(self.printStrIndex)
+            self.code.add(self.expIndex)
             # invokevirtual 'println'
             self.code.add(0xb6)
             self.code.add(0x00)
             self.code.add(0x19)
+        elif self.expType == self.EXP_IMMVALUE:
+            # iload <local>
+            #self.code.add(0x12)
+            #self.code.add(0x1f)
+            self.code.add(0x15)
+            self.code.add(self.expIndex)
+            # invokevirtual 'println'
+            self.code.add(0xb6)
+            self.code.add(0x00)
+            self.code.add(0x13)
+        elif self.expType == self.EXP_IMMSTRING:
+            # aload <local>
+            self.code.add(0x19)
+            self.code.add(self.expIndex)
+            # invokevirtual 'println'
+            self.code.add(0xb6)
+            self.code.add(0x00)
+            self.code.add(0x19)
+            
+    @vis.when(mjc_Assign)
+    def visit(self, node):
+        currSym = Symbol.symbol(node.i.toString())
+        methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
+        methFieldType = util.typeConvert(methFieldEntry.getType().toString())
+        location = methFieldEntry.getLocation()
+        node.e.accept(self)
+        # calculate value of assignment expression
+        self.code.add(0x12)
+        self.code.add(self.expIndex)
+        if methFieldType == "I":
+            # istore <location>
+            self.code.add(0x36)
+            self.code.add(location)
+        elif methFieldType == "Ljava/lang/String;":
+            # astore <location>
+            self.code.add(0x3a)
+            self.code.add(location)
         
     @vis.when(mjc_MethodDeclSimple)
     def visit(self, node):
+        # Set method symbol marker
+        self.methodSym = Symbol.symbol(node.i.toString())
         self.code = ArrayList()
         type = "("
         for x in range (0, node.fl.size()):
@@ -137,6 +194,8 @@ class CodeGenVisitor(VisitorAdaptor):
          
     @vis.when(mjc_MethodDeclStatic)
     def visit(self, node):
+        # Set method symbol marker
+        self.methodSym = Symbol.symbol(node.i.toString())
         self.code = ArrayList()
         type = "("
         for x in range (0, node.fl.size()):
@@ -156,6 +215,8 @@ class CodeGenVisitor(VisitorAdaptor):
         
     @vis.when(mjc_ClassDeclSimple)
     def visit(self,node):
+        # Set class symbol marker
+        self.classSym = Symbol.symbol(util.typeConvert(node.i.toString()))
         # Clear out global ArrayLists
         self.fieldList = ArrayList()
         self.methodList = ArrayList()
@@ -173,6 +234,8 @@ class CodeGenVisitor(VisitorAdaptor):
         
     @vis.when(mjc_ClassDeclExtends)
     def visit(self, node):
+        # Set class symbol marker
+        self.classSym = Symbol.symbol(util.typeConvert(node.i.toString()))
         # Clear out global ArrayLists
         self.fieldList = ArrayList()
         self.methodList = ArrayList()

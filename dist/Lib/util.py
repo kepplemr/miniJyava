@@ -25,4 +25,4 @@ def typeConvert(mjc_Type):
         return mjc_Type[start:end].strip()
     else:
         return "V"
-    
+  
