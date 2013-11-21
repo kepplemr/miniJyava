@@ -3,16 +3,6 @@ Created on Nov 18, 2013
 
 @author: michael
 '''
-EXP_ADD = 0
-EXP_SUB = 1
-EXP_MUL = 2
-EXP_DIV = 3
-EXP_GT = 4
-EXP_LT = 5
-EXP_GTE = 6
-EXP_LTE = 7
-EXP_EQ = 8
-EXP_NE = 9
 
 def typeConvert(mjc_Type):
     if mjc_Type[:19] == "mjc_StringArrayType":
