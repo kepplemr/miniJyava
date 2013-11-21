@@ -4,19 +4,7 @@ Created on Nov 14, 2013
 @author:      michael
 @description: Visitor class used to generate MiniJava bytecode
 '''
-import struct
-import sys
-import dispatch as vis
-from os.path import dirname, realpath, sep, pardir
-temp = sep + pardir + sep + pardir + sep
-sys.path.append(dirname(realpath(__file__)) + temp + "classes")
-import java.util.ArrayList as ArrayList
-import util
-from javacode import *
-from javacode.symbol import *
-from javacode.syntaxtree import *
-from javacode.classwriter import *
-from javacode.classwriter.constantpool import *
+from util import *
 
 class CodeGenVisitor(VisitorAdaptor):
     # Constants
@@ -37,7 +25,7 @@ class CodeGenVisitor(VisitorAdaptor):
     
     # Class fields
     symTab = Table.getInstance()
-    codeGen = CodeGenerator()
+    codeGener = CodeGenerator()
     constantPool = ConstantPoolIndexer()
     fieldList = ArrayList()
     methodList = ArrayList()
@@ -47,20 +35,6 @@ class CodeGenVisitor(VisitorAdaptor):
     expType = 0
     expIndex = 0
     
-    """ Add default <init> constructor """
-    def addInit(self):
-        self.code = ArrayList()
-        # aload_0
-        self.code.add(0x2a)
-        # invokespecial #1
-        self.code.add(0xb7)
-        self.code.add(0x00)
-        self.code.add(0x06)
-        # return
-        self.code.add(0xb1)
-        init = MethodInfo(0, 3, 4, 7, self.code.size()+12, 512, 512, self.code)
-        self.methodList.add(init)
-
     """ Generic method to initialize dynamic dispatcher """        
     @vis.on('node')
     def visit(self, node):
@@ -77,54 +51,42 @@ class CodeGenVisitor(VisitorAdaptor):
     """ EXP visitor methods """
     @vis.when(mjc_Add)
     def visit(self, node):
-        util.arithmeticExpression(self, node, "Add")
-        
+        arithmeticExpression(self, node, "Add")
     @vis.when(mjc_Sub)
     def visit(self, node):
-        util.arithmeticExpression(self, node, "Sub")
-        
+        arithmeticExpression(self, node, "Sub")
     @vis.when(mjc_Mult)
     def visit(self, node):
-        util.arithmeticExpression(self, node, "Mul")
-        
+        arithmeticExpression(self, node, "Mul")
     @vis.when(mjc_Div)
     def visit(self, node):
-        util.arithmeticExpression(self, node, "Div")
-    
+        arithmeticExpression(self, node, "Div")
     @vis.when(mjc_GT)
     def visit(self, node):
-        util.comparisonExpression(self, node, "GT")
-        
+        comparisonExpression(self, node, "GT")
     @vis.when(mjc_LT)
     def visit(self, node):
-        util.comparisonExpression(self, node, "LT")
-        
+        comparisonExpression(self, node, "LT")
     @vis.when(mjc_GTEQ)
     def visit(self, node):
-        util.comparisonExpression(self, node, "GTE")
-        
+        comparisonExpression(self, node, "GTE")
     @vis.when(mjc_LTEQ)
     def visit(self, node):
-        util.comparisonExpression(self, node, "LTE")
-    
+        comparisonExpression(self, node, "LTE")
     @vis.when(mjc_DoubleEqual)
     def visit(self, node):
-        util.comparisonExpression(self, node, "EQ")
-    
+        comparisonExpression(self, node, "EQ")
     @vis.when(mjc_NotEqual)
     def visit(self, node):
-        util.comparisonExpression(self, node, "NE")
-        
+        comparisonExpression(self, node, "NE")
     @vis.when(mjc_IntegerLiteral)
     def visit(self, node):
         self.expType = self.EXP_INTINDEX
         self.expIndex = self.constantPool.getInteger(node.i)
-        
     @vis.when(mjc_StringLiteral)
     def visit(self, node):
         self.expType = self.EXP_STRINDEX
         self.expIndex = self.constantPool.getString(node.s)
-    
     @vis.when(mjc_True)
     def visit(self, node):
         self.expType = self.EXP_BOOLVAL
@@ -132,7 +94,6 @@ class CodeGenVisitor(VisitorAdaptor):
         # bipush 1
         self.code.add(0x10)
         self.code.add(0x01)
-    
     @vis.when(mjc_False)
     def visit(self, node):
         self.expType = self.EXP_BOOLVAL
@@ -140,17 +101,15 @@ class CodeGenVisitor(VisitorAdaptor):
         #bipush 0
         self.code.add(0x10)
         self.code.add(0x00)
-        
     @vis.when(mjc_Null)
     def visit(self, node):
         self.expType = self.EXP_STRINDEX
         self.expIndex = self.constantPool.getString("null") 
-        
     @vis.when(mjc_IdentifierExp)
     def visit(self, node):
         currSym = Symbol.symbol(mjc_Identifier(node.s).toString())
         methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
-        methFieldType = util.typeConvert(methFieldEntry.getType().toString())
+        methFieldType = typeConvert(methFieldEntry.getType().toString())
         self.expIndex = methFieldEntry.getLocation()
         if methFieldType == "I":
             self.expType = self.EXP_LOCINTIND
@@ -218,7 +177,7 @@ class CodeGenVisitor(VisitorAdaptor):
     def visit(self, node):
         currSym = Symbol.symbol(node.i.toString())
         methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
-        methFieldType = util.typeConvert(methFieldEntry.getType().toString())
+        methFieldType = typeConvert(methFieldEntry.getType().toString())
         location = methFieldEntry.getLocation()
         node.e.accept(self)
         # calculate value of assignment expression
@@ -241,10 +200,10 @@ class CodeGenVisitor(VisitorAdaptor):
         self.code = ArrayList()
         type = "("
         for x in range (0, node.fl.size()):
-            type += util.typeConvert(node.fl.elementAt(x).t.toString())
+            type += typeConvert(node.fl.elementAt(x).t.toString())
         type += ")"
-        type += util.typeConvert(node.t.toString())
-        nameIndex = self.constantPool.getUtf8(util.typeConvert(node.i.toString()))
+        type += typeConvert(node.t.toString())
+        nameIndex = self.constantPool.getUtf8(typeConvert(node.i.toString()))
         typeIndex = self.constantPool.getUtf8(type)
         maxLocals = node.fl.size() + node.vl.size()
         # Handle method statements
@@ -262,10 +221,10 @@ class CodeGenVisitor(VisitorAdaptor):
         self.code = ArrayList()
         type = "("
         for x in range (0, node.fl.size()):
-            type += util.typeConvert(node.fl.elementAt(x).t.toString())
+            type += typeConvert(node.fl.elementAt(x).t.toString())
         type += ")"
-        type += util.typeConvert(node.t.toString())
-        nameIndex = self.constantPool.getUtf8(util.typeConvert(node.i.toString()))
+        type += typeConvert(node.t.toString())
+        nameIndex = self.constantPool.getUtf8(typeConvert(node.i.toString()))
         typeIndex = self.constantPool.getUtf8(type)
         maxLocals = node.fl.size() + node.vl.size()
         # Handle method statements
@@ -279,45 +238,16 @@ class CodeGenVisitor(VisitorAdaptor):
     """ Class visitor methods """   
     @vis.when(mjc_ClassDeclSimple)
     def visit(self,node):
-        # Set class symbol marker
-        self.classSym = Symbol.symbol(util.typeConvert(node.i.toString()))
-        # Clear out global ArrayLists
-        self.fieldList = ArrayList()
-        self.methodList = ArrayList()
-        self.constantPool.clearConstantPool()
-        self.constantPool.createPrintLineEntries()
-        self.addInit()
-        # Handle class fields
-        for x in range(0, node.vl.size()):
-            node.vl.elementAt(x).accept(self)
-        # Handle class methods
-        for x in range(0, node.ml.size()):
-            node.ml.elementAt(x).accept(self)
-        classIndex = self.constantPool.getClass(node.i.s)
-        self.codeGen.addClass(ClassFile(classIndex, 2, self.constantPool.getCPClone(), self.fieldList, self.methodList))
-        
+        getClass(self, node, "simple") 
     @vis.when(mjc_ClassDeclExtends)
     def visit(self, node):
-        # Set class symbol marker
-        self.classSym = Symbol.symbol(util.typeConvert(node.i.toString()))
-        # Clear out global ArrayLists
-        self.fieldList = ArrayList()
-        self.methodList = ArrayList()
-        self.constantPool.clearConstantPool()
-        self.constantPool.createPrintLineEntries()
-        self.addInit()
-        # Handle class fields
-        for x in range(0, node.vl.size()):
-            node.vl.elementAt(x).accept(self)
-        # Handle class methods
-        for x in range(0, node.ml.size()):
-            node.ml.elementAt(x).accept(self)
-        classIndex = self.constantPool.getClass(node.i.s)
-        self.codeGen.addClass(ClassFile(classIndex, 2, self.constantPool.getCPClone(), self.fieldList, self.methodList))
+        getClass(self, node, "extends")
     
     """ Root node of AST tree - begin code generation here """
     @vis.when(mjc_ClassDeclList)
     def visit(self, node):
+        self.constantPool.clearConstantPool()
+        self.constantPool.createPrintLineEntries()
         for x in range(0, node.size()):
             node.elementAt(x).accept(self)
-        self.codeGen.writeFiles()
+        self.codeGener.writeFiles()

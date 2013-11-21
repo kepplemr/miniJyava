@@ -7,3 +7,8 @@ class Test
         System.out.println(i > j);
     }
 }
+
+class Test2
+{
+    int x;
+}
