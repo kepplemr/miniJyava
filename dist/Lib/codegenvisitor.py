@@ -77,85 +77,43 @@ class CodeGenVisitor(VisitorAdaptor):
     """ EXP visitor methods """
     @vis.when(mjc_Add)
     def visit(self, node):
-        self.expIndex = 0
-        # push both EXP's to stack
-        node.e1.accept(self)
-        self.code.add(0x12)
-        self.code.add(self.expIndex)
-        node.e2.accept(self)
-        self.code.add(0x12)
-        self.code.add(self.expIndex)
-        # iadd 
-        self.code.add(0x60)  
-        self.expType = self.EXP_IMMINTVAL
+        util.arithmeticExpression(self, node, "Add")
         
     @vis.when(mjc_Sub)
     def visit(self, node):
-        self.expIndex = 0
-        # push both EXP's to stack
-        node.e1.accept(self)
-        self.code.add(0x12)
-        self.code.add(self.expIndex)
-        node.e2.accept(self)
-        self.code.add(0x12)
-        self.code.add(self.expIndex)
-        # isub 
-        self.code.add(0x64)  
-        self.expType = self.EXP_IMMINTVAL
+        util.arithmeticExpression(self, node, "Sub")
         
     @vis.when(mjc_Mult)
     def visit(self, node):
-        self.expIndex = 0
-        # push both EXP's to stack
-        node.e1.accept(self)
-        self.code.add(0x12)
-        self.code.add(self.expIndex)
-        node.e2.accept(self)
-        self.code.add(0x12)
-        self.code.add(self.expIndex)
-        # imul
-        self.code.add(0x68)  
-        self.expType = self.EXP_IMMINTVAL
+        util.arithmeticExpression(self, node, "Mul")
         
     @vis.when(mjc_Div)
     def visit(self, node):
-        self.expIndex = 0
-        # push both EXP's to stack
-        node.e1.accept(self)
-        self.code.add(0x12)
-        self.code.add(self.expIndex)
-        node.e2.accept(self)
-        self.code.add(0x12)
-        self.code.add(self.expIndex)
-        # idiv
-        self.code.add(0x6c)  
-        self.expType = self.EXP_IMMINTVAL
+        util.arithmeticExpression(self, node, "Div")
     
     @vis.when(mjc_GT)
     def visit(self, node):
-        self.expIndex = 0
-        # push both EXP's to stack
-        node.e1.accept(self)
-        self.code.add(0x12)
-        self.code.add(self.expIndex)
-        node.e2.accept(self)
-        self.code.add(0x12)
-        self.code.add(self.expIndex)
-        # if_icmpgt -> (branch + 8)
-        self.code.add(0xa3)
-        self.code.add(0x00)
-        self.code.add(0x08)
-        # bipush 0
-        self.code.add(0x10)
-        self.code.add(0x00)
-        # goto -> (branch + 5)
-        self.code.add(0xa7)
-        self.code.add(0x00)
-        self.code.add(0x05)
-        # bipush 1
-        self.code.add(0x10)
-        self.code.add(0x01)
-        self.expType = self.EXP_BOOLVAL
+        util.comparisonExpression(self, node, "GT")
+        
+    @vis.when(mjc_LT)
+    def visit(self, node):
+        util.comparisonExpression(self, node, "LT")
+        
+    @vis.when(mjc_GTEQ)
+    def visit(self, node):
+        util.comparisonExpression(self, node, "GTE")
+        
+    @vis.when(mjc_LTEQ)
+    def visit(self, node):
+        util.comparisonExpression(self, node, "LTE")
+    
+    @vis.when(mjc_DoubleEqual)
+    def visit(self, node):
+        util.comparisonExpression(self, node, "EQ")
+    
+    @vis.when(mjc_NotEqual)
+    def visit(self, node):
+        util.comparisonExpression(self, node, "NE")
         
     @vis.when(mjc_IntegerLiteral)
     def visit(self, node):
