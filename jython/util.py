@@ -38,6 +38,50 @@ def typeConvert(mjc_Type):
         return mjc_Type[start:end].strip()
     else:
         return "V"
+    
+def printCpIntIndex(codeGen):
+    # ldc & index
+    codeGen.code.add(0x12)
+    codeGen.code.add(codeGen.expIndex)
+    # invokevirtual 'println(CP_IntIndex)'
+    codeGen.code.add(0xb6)
+    codeGen.code.add(0x00)
+    codeGen.code.add(0x13)
+def printCpStrIndex(codeGen):
+    # ldc & index
+    codeGen.code.add(0x12)
+    codeGen.code.add(codeGen.expIndex)
+    # invokevirtual 'println(CP_StrIndex)'
+    codeGen.code.add(0xb6)
+    codeGen.code.add(0x00)
+    codeGen.code.add(0x19)
+def printLocInt(codeGen):
+    # iload <local>
+    codeGen.code.add(0x15)
+    codeGen.code.add(codeGen.expIndex)
+    # invokevirtual 'println(int i)
+    codeGen.code.add(0xb6)
+    codeGen.code.add(0x00)
+    codeGen.code.add(0x13)
+def printLocString(codeGen):
+    # aload <local>
+    codeGen.code.add(0x19)
+    codeGen.code.add(codeGen.expIndex)
+    # invokevirtual 'println(String str)'
+    codeGen.code.add(0xb6)
+    codeGen.code.add(0x00)
+    codeGen.code.add(0x19)
+def printImmIntVal(codeGen):
+    # invokevirtual 'println(42)'
+    codeGen.code.add(0xb6)
+    codeGen.code.add(0x00)
+    codeGen.code.add(0x13)
+def printImmBoolVal(codeGen):
+    # invokevirtual 'println(boolean)'
+    codeGen.code.add(0xb6)
+    codeGen.code.add(0x00)
+    codeGen.code.add(0x16)
+
 
 def arithmeticExpression(codeGen, mjc_Exp, mjc_OpType):
     codeGen.expIndex = 0
@@ -115,7 +159,7 @@ def getClass(codeGen, mjc_Class, mjc_ClassType):
     # Clear out global ArrayLists
     codeGen.fieldList = ArrayList()
     codeGen.methodList = ArrayList()            
-    # Get parent class's fields and methods
+    # Get parent class's fields and methods if we're extending something
     if mjc_ClassType == "extends":
         for x in range(0, mjc_Class.j.vl.size()):
             mjc_Class.j.vl.elementAt(x).accept(codeGen)
@@ -130,3 +174,26 @@ def getClass(codeGen, mjc_Class, mjc_ClassType):
         mjc_Class.ml.elementAt(x).accept(codeGen)
     classIndex = codeGen.constantPool.getClass(mjc_Class.i.s)
     codeGen.codeGener.addClass(ClassFile(classIndex, 2, codeGen.constantPool.getCPClone(), codeGen.fieldList, codeGen.methodList))
+
+def getMethod(codeGen, mjc_Method, mjc_MethType):
+    # Set method symbol marker
+    codeGen.methodSym = Symbol.symbol(mjc_Method.i.toString())
+    codeGen.code = ArrayList()
+    type = "("
+    for x in range (0, mjc_Method.fl.size()):
+        type += typeConvert(mjc_Method.fl.elementAt(x).t.toString())
+    type += ")"
+    type += typeConvert(mjc_Method.t.toString())
+    nameIndex = codeGen.constantPool.getUtf8(typeConvert(mjc_Method.i.toString()))
+    typeIndex = codeGen.constantPool.getUtf8(type)
+    maxLocals = mjc_Method.fl.size() + mjc_Method.vl.size()
+    # Handle method statements
+    for x in range(0, mjc_Method.sl.size()):
+        mjc_Method.sl.elementAt(x).accept(codeGen)
+    # empty return opcode
+    codeGen.code.add(0xb1)
+    if mjc_MethType == "static":
+        method = MethodInfo(codeGen.ACCESS_PUBLICSTATIC, nameIndex, typeIndex, codeGen.CODE_INDEX, codeGen.code.size()+12, codeGen.MAX_STACK, maxLocals, codeGen.code)
+    else:
+        method = MethodInfo(codeGen.ACCESS_PUBLIC, nameIndex, typeIndex, codeGen.CODE_INDEX, codeGen.code.size()+12, codeGen.MAX_STACK, maxLocals, codeGen.code)
+    codeGen.methodList.add(method)

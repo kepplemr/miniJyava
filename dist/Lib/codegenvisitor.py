@@ -131,47 +131,17 @@ class CodeGenVisitor(VisitorAdaptor):
         # handle EXP to print
         node.e.accept(self)
         if self.expType == self.EXP_INTINDEX:
-            # ldc & index
-            self.code.add(0x12)
-            self.code.add(self.expIndex)
-            # invokevirtual 'println(CP_IntIndex)'
-            self.code.add(0xb6)
-            self.code.add(0x00)
-            self.code.add(0x13)
+            printCpIntIndex(self)
         elif self.expType == self.EXP_STRINDEX:
-            # ldc & index
-            self.code.add(0x12)
-            self.code.add(self.expIndex)
-            # invokevirtual 'println(CP_StrIndex)'
-            self.code.add(0xb6)
-            self.code.add(0x00)
-            self.code.add(0x19)
+            printCpStrIndex(self)
         elif self.expType == self.EXP_IMMINTVAL:
-            # invokevirtual 'println(42)'
-            self.code.add(0xb6)
-            self.code.add(0x00)
-            self.code.add(0x13)
+            printImmIntVal(self)
         elif self.expType == self.EXP_LOCINTIND:
-            # iload <local>
-            self.code.add(0x15)
-            self.code.add(self.expIndex)
-            # invokevirtual 'println(int i)
-            self.code.add(0xb6)
-            self.code.add(0x00)
-            self.code.add(0x13)
+            printLocInt(self)
         elif self.expType == self.EXP_LOCSTRIND:
-            # aload <local>
-            self.code.add(0x19)
-            self.code.add(self.expIndex)
-            # invokevirtual 'println(String str)'
-            self.code.add(0xb6)
-            self.code.add(0x00)
-            self.code.add(0x19)
+            printLocString(self)
         elif self.expType == self.EXP_BOOLVAL:
-            # invokevirtual 'println(boolean)'
-            self.code.add(0xb6)
-            self.code.add(0x00)
-            self.code.add(0x16)
+            printImmBoolVal(self)
             
     @vis.when(mjc_Assign)
     def visit(self, node):
@@ -195,45 +165,10 @@ class CodeGenVisitor(VisitorAdaptor):
     """ Method visitor methods """
     @vis.when(mjc_MethodDeclSimple)
     def visit(self, node):
-        # Set method symbol marker
-        self.methodSym = Symbol.symbol(node.i.toString())
-        self.code = ArrayList()
-        type = "("
-        for x in range (0, node.fl.size()):
-            type += typeConvert(node.fl.elementAt(x).t.toString())
-        type += ")"
-        type += typeConvert(node.t.toString())
-        nameIndex = self.constantPool.getUtf8(typeConvert(node.i.toString()))
-        typeIndex = self.constantPool.getUtf8(type)
-        maxLocals = node.fl.size() + node.vl.size()
-        # Handle method statements
-        for x in range(0, node.sl.size()):
-            node.sl.elementAt(x).accept(self)
-        # empty return opcode
-        self.code.add(0xb1)
-        method = MethodInfo(self.ACCESS_PUBLIC, nameIndex, typeIndex, self.CODE_INDEX, self.code.size()+12, self.MAX_STACK, maxLocals, self.code)
-        self.methodList.add(method)
-         
+        getMethod(self, node, "simple")
     @vis.when(mjc_MethodDeclStatic)
     def visit(self, node):
-        # Set method symbol marker
-        self.methodSym = Symbol.symbol(node.i.toString())
-        self.code = ArrayList()
-        type = "("
-        for x in range (0, node.fl.size()):
-            type += typeConvert(node.fl.elementAt(x).t.toString())
-        type += ")"
-        type += typeConvert(node.t.toString())
-        nameIndex = self.constantPool.getUtf8(typeConvert(node.i.toString()))
-        typeIndex = self.constantPool.getUtf8(type)
-        maxLocals = node.fl.size() + node.vl.size()
-        # Handle method statements
-        for x in range(0, node.sl.size()):
-            node.sl.elementAt(x).accept(self)
-        # empty return opcode
-        self.code.add(0xb1)
-        method = MethodInfo(self.ACCESS_PUBLICSTATIC, nameIndex, typeIndex, self.CODE_INDEX, self.code.size()+12, self.MAX_STACK, maxLocals, self.code)
-        self.methodList.add(method)
+        getMethod(self, node, "static")
     
     """ Class visitor methods """   
     @vis.when(mjc_ClassDeclSimple)
