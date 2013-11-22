@@ -2,13 +2,18 @@ class Test
 {
     public static void main(String [] args)
     {
-        int i = 2;
-        int j = 3;
-        System.out.println(i > j);
+        int arr[] = new int[10];
+        arr[0] = 7;
+        int test = arr[0];
     }
-}
 
-class Test2
-{
-    int x;
+    public String test()
+    {
+        return "testing";
+    }
+
+    public int testInt()
+    {
+        return 7;
+    }
 }

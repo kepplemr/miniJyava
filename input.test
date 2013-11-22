@@ -7,6 +7,7 @@ class Test
             int locationOne;
             int testInt;
             String testString;
+            int[] arr;
         endvars
         {
             System.out.println("Testing println stuff:");
@@ -37,6 +38,13 @@ class Test
             testString = "testMe";
             System.out.println(testInt);
             System.out.println(testString);
+        }
+        {
+            System.out.println("Testing arrays:");
+            arr = new int[5];
+            arr[1] = 7;
+            testInt = arr[1];
+            System.out.println(testInt);
         }
         return 0;
     }

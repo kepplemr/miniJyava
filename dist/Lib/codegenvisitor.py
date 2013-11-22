@@ -15,6 +15,7 @@ class CodeGenVisitor(VisitorAdaptor):
     EXP_LOCSTRIND = 5
     EXP_IMMINTVAL = 6
     EXP_BOOLVAL = 7
+    EXP_ARRAY = 8
     ACCESS_PUBLICSTATIC = 9
     CODE_INDEX = 7
     MAX_STACK = 512
@@ -115,13 +116,31 @@ class CodeGenVisitor(VisitorAdaptor):
             self.expType = self.EXP_LOCINTIND
         elif methFieldType == "Ljava/lang/String;":
             self.expType = self.EXP_LOCSTRIND
+    @vis.when(mjc_NewArray)
+    def visit(self, node):
+        node.e.accept(self)
+        self.expType = self.EXP_ARRAY
+    @vis.when(mjc_ArrayLookup)
+    def visit(self, node):
+        print("Arraylookup")
+        # find location of array
+        node.e1.accept(self)
+        # aload <arrayLocation>
+        self.code.add(0x19)
+        self.code.add(self.expIndex)
+        node.e2.accept(self)
+        # ldc <arrayIndex>
+        self.code.add(0x12)
+        self.code.add(self.expIndex)
+        # iaload
+        self.code.add(0x2e)
+        self.expType = self.EXP_IMMINTVAL
     
     """ Statement visitor methods """
     @vis.when(mjc_Block)
     def visit(self, node):
         for x in range(0, node.sl.size()):
             node.sl.elementAt(x).accept(self)
-            
     @vis.when(mjc_Print)
     def visit(self, node):
         # getstatic 'out'
@@ -143,24 +162,62 @@ class CodeGenVisitor(VisitorAdaptor):
         elif self.expType == self.EXP_BOOLVAL:
             printImmBoolVal(self)
             
+            
+            
+    # Convert to like Print
     @vis.when(mjc_Assign)
+    def visit(self, node):
+        currSym = Symbol.symbol(node.i.toString())
+        methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
+        location = methFieldEntry.getLocation()
+        node.e.accept(self)
+        if self.expType == self.EXP_INTINDEX:
+            self.code.add(0x12)
+            self.code.add(self.expIndex)
+            # istore <location>
+            self.code.add(0x36)
+            self.code.add(location)
+        elif self.expType == self.EXP_STRINDEX:
+            self.code.add(0x12)
+            self.code.add(self.expIndex)
+            # astore <location>
+            self.code.add(0x3a)
+            self.code.add(location)
+        elif self.expType == self.EXP_IMMINTVAL:
+            # istore <location>
+            self.code.add(0x36)
+            self.code.add(location)
+        else:
+            self.code.add(0x12)
+            self.code.add(self.expIndex)
+            # newarray(int)
+            self.code.add(0xbc)
+            self.code.add(0x0a)
+            # astore <location>
+            self.code.add(0x3a)
+            self.code.add(location)
+            
+    @vis.when(mjc_ArrayAssign)
     def visit(self, node):
         currSym = Symbol.symbol(node.i.toString())
         methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
         methFieldType = typeConvert(methFieldEntry.getType().toString())
         location = methFieldEntry.getLocation()
-        node.e.accept(self)
-        # calculate value of assignment expression
+        node.e1.accept(self)
+        # retrieve array reference from local variable
+        self.code.add(0x19)
+        self.code.add(location)
+        # ldc <cpIntArrayIndex>
         self.code.add(0x12)
         self.code.add(self.expIndex)
-        if methFieldType == "I":
-            # istore <location>
-            self.code.add(0x36)
-            self.code.add(location)
-        elif methFieldType == "Ljava/lang/String;":
-            # astore <location>
-            self.code.add(0x3a)
-            self.code.add(location)
+        # ldc <valToStore>
+        node.e2.accept(self)
+        self.code.add(0x12)
+        self.code.add(self.expIndex)
+        # iastore
+        self.code.add(0x4f)
+        
+        
     
     """ Method visitor methods """
     @vis.when(mjc_MethodDeclSimple)
