@@ -105,7 +105,6 @@ class CodeGenVisitor(VisitorAdaptor):
         currSym = Symbol.symbol(mjc_Identifier(node.s).toString())
         methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
         methFieldType = typeConvert(methFieldEntry.getType().toString())
-        print("MethFIeldType -> " + methFieldType)
         self.expIndex = methFieldEntry.getLocation()
         if methFieldType == "I":
             self.expType = EXP_LOCINTIND
@@ -119,7 +118,6 @@ class CodeGenVisitor(VisitorAdaptor):
     def visit(self, node):
         node.e.accept(self)
         self.expType = EXP_ARRAY
-        
     @vis.when(mjc_ArrayLookup)
     def visit(self, node):
         # find location of array
@@ -140,6 +138,33 @@ class CodeGenVisitor(VisitorAdaptor):
             # aaload
             self.code.add(0x32)
             self.expType = EXP_IMMSTRREF
+    @vis.when(mjc_NewObject)
+    def visit(self, node):
+        className = typeConvert(node.i.toString())
+        classIndex = self.constantPool.getClass(className)
+        initRef = self.constantPool.getMethodInfo(className, "<init>", "()V")
+        # new <class>
+        self.code.add(0xbb)
+        self.code.add(0x00)
+        self.code.add(classIndex)
+        # dup
+        self.code.add(0x59)
+        # invokespecial
+        self.code.add(0xb7)
+        self.code.add(0x00)
+        self.code.add(initRef)
+        self.expType = EXP_OBJECT
+    @vis.when(mjc_CallStatement)
+    def visit(self, node):
+        print("Call statement")
+        #currSym = Symbol.symbol(node.i.toString())
+        #methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
+        #location = methFieldEntry.getLocation()
+        # aload <object>
+        #self.code.add(0x19)
+        #self.code.add(location)
+        
+        
     
     """ Statement visitor methods """
     @vis.when(mjc_Block)
@@ -178,6 +203,9 @@ class CodeGenVisitor(VisitorAdaptor):
             # istore <location>
             self.code.add(0x36)
             self.code.add(location)
+        elif self.expType == EXP_OBJECT:
+            self.code.add(0x3a)
+            self.code.add(location)
         elif self.expType == EXP_STRINDEX:
             self.code.add(0x12)
             self.code.add(self.expIndex)
@@ -198,9 +226,6 @@ class CodeGenVisitor(VisitorAdaptor):
                 newIntArray(self, self.expIndex, location)
             else:
                 newStringArray(self, self.expIndex, location)
-                
-
-        
     @vis.when(mjc_ArrayAssign)
     def visit(self, node):
         currSym = Symbol.symbol(node.i.toString())
@@ -244,8 +269,10 @@ class CodeGenVisitor(VisitorAdaptor):
     """ Root node of AST tree - begin code generation here """
     @vis.when(mjc_ClassDeclList)
     def visit(self, node):
-        self.constantPool.clearConstantPool()
-        self.constantPool.createPrintLineEntries()
+        # Constant pools are not shared between multiple classes in one file.
         for x in range(0, node.size()):
+            self.constantPool.clearConstantPool()
+            self.constantPool.createPrintLineEntries()
+            self.constantPool.getString("--- Inside Class Constructor " + repr(x) + " ---")
             node.elementAt(x).accept(self)
         self.codeGener.writeFiles()

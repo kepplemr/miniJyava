@@ -1,22 +1,18 @@
-class Test
+public class Test
 {
     public static void main(String [] args)
     {
-        int arr[] = new int[10];
-        arr[0] = 7;
-        int test = arr[0];
-        String strArr[] = new String[10];
-        strArr[6] = "hey there";
-        String testStr = strArr[6];
+        Test2 X = new Test2();
+        X.callMe();
     }
+}
 
-    public String test()
-    {
-        return "testing";
-    }
+class Test2
+{
+    public Test2() {}
 
-    public int testInt()
+    public void callMe()
     {
-        return 7;
+        System.out.println("Hey");
     }
 }

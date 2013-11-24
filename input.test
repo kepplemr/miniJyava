@@ -10,9 +10,11 @@ class Test
             int[] arr;
             String[] testStrArr;
             String testStr;
+            Test X;
+            Test2 Y;
         endvars
         {
-            System.out.println("Testing println stuff:");
+            System.out.println("$$$ Testing println stuff: $$$");
             System.out.println("testing");
             System.out.println(42);
             System.out.println(true);
@@ -20,7 +22,7 @@ class Test
             System.out.println(null);
         }
         {
-            System.out.println("Testing Operators:");
+            System.out.println("$$$ Testing Operators: $$$");
             System.out.println(1+2);
             System.out.println(4-2);
             System.out.println(7*7);
@@ -33,7 +35,7 @@ class Test
             System.out.println(4 != 3);
         }
         {
-            System.out.println("Testing Assignment:");
+            System.out.println("$$$ Testing Assignment: $$$");
             testInt = 88;
             testString = "fail";
             testInt = 152;
@@ -42,7 +44,7 @@ class Test
             System.out.println(testString);
         }
         {
-            System.out.println("Testing arrays:");
+            System.out.println("$$$ Testing arrays: $$$");
             arr = new int[5];
             arr[1] = 7;
             testInt = arr[1];
@@ -52,6 +54,24 @@ class Test
             testStr = testStrArr[1];
             System.out.println(testStr);
         }
+        {
+            System.out.println("$$$ Testing objects: $$$");
+            X = new Test();
+            Y = new Test2();
+            X.callMe();
+        }
         return 0;
     }
+
+    public int callMe()
+    {
+        beginvars
+        endvars
+        System.out.println("Heeeey");
+        return 0;
+    }
+}
+
+class Test2
+{
 }

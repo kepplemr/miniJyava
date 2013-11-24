@@ -17,6 +17,7 @@ from javacode.classwriter import *
 from javacode.classwriter.constantpool import *
 
 # Constants
+EXP_OBJECT = 0
 EXP_IMMSTRREF = 1
 EXP_INTINDEX = 2
 EXP_STRINDEX = 3
@@ -28,6 +29,8 @@ EXP_ARRAY = 8
 EXP_INTARRAY = 9
 EXP_STRARRAY = 10
 
+
+""" Converts long toString() from ClassGen files to more sensical format """
 def typeConvert(mjc_Type):
     if mjc_Type[:19] == "mjc_StringArrayType":
         return "[Ljava/lang/String;"
@@ -51,6 +54,7 @@ def typeConvert(mjc_Type):
     else:
         return "V"
     
+""" Print functions for various types """
 def printCpIntIndex(codeGen):
     # ldc & index
     codeGen.code.add(0x12)
@@ -94,7 +98,7 @@ def printImmBoolVal(codeGen):
     codeGen.code.add(0x00)
     codeGen.code.add(0x16)
 
-
+""" Expression evaluation functions """
 def arithmeticExpression(codeGen, mjc_Exp, mjc_OpType):
     codeGen.expIndex = 0
     # push both EXP's to stack
@@ -114,7 +118,6 @@ def arithmeticExpression(codeGen, mjc_Exp, mjc_OpType):
     elif mjc_OpType == "Div":
         codeGen.code.add(0x6c)  
     codeGen.expType = EXP_IMMINTVAL
-        
 def comparisonExpression(codeGen, mjc_Exp, mjc_OpType):
     codeGen.expIndex = 0
     # push both EXP's to stack
@@ -151,7 +154,7 @@ def comparisonExpression(codeGen, mjc_Exp, mjc_OpType):
     codeGen.code.add(0x01)
     codeGen.expType = EXP_BOOLVAL
         
-""" Add default <init> constructor """
+""" Adds default <init> constructor """
 def addInit(codeGen):
     codeGen.code = ArrayList()
     # aload_0
@@ -160,17 +163,27 @@ def addInit(codeGen):
     codeGen.code.add(0xb7)
     codeGen.code.add(0x00)
     codeGen.code.add(0x06)
+    # Print message to indicate constructor was called.
+    codeGen.code.add(0xb2)
+    codeGen.code.add(0x00)
+    codeGen.code.add(0x0d)
+    codeGen.code.add(0x12)
+    codeGen.code.add(0x1c)
+    codeGen.code.add(0xb6)
+    codeGen.code.add(0x00)
+    codeGen.code.add(0x19)
     # return
     codeGen.code.add(0xb1)
     init = MethodInfo(0, 3, 4, 7, codeGen.code.size() + 12, 512, 512, codeGen.code)
     codeGen.methodList.add(init)
-    
+   
+""" Macro class/method level functions """ 
 def getClass(codeGen, mjc_Class, mjc_ClassType):
     # Set class symbol marker
     codeGen.classSym = Symbol.symbol(typeConvert(mjc_Class.i.toString()))
     # Clear out global ArrayLists
     codeGen.fieldList = ArrayList()
-    codeGen.methodList = ArrayList()            
+    codeGen.methodList = ArrayList()         
     # Get parent class's fields and methods if we're extending something
     if mjc_ClassType == "extends":
         for x in range(0, mjc_Class.j.vl.size()):
@@ -186,7 +199,6 @@ def getClass(codeGen, mjc_Class, mjc_ClassType):
         mjc_Class.ml.elementAt(x).accept(codeGen)
     classIndex = codeGen.constantPool.getClass(mjc_Class.i.s)
     codeGen.codeGener.addClass(ClassFile(classIndex, 2, codeGen.constantPool.getCPClone(), codeGen.fieldList, codeGen.methodList))
-
 def getMethod(codeGen, mjc_Method, mjc_MethType):
     # Set method symbol marker
     codeGen.methodSym = Symbol.symbol(mjc_Method.i.toString())

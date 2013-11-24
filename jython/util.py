@@ -17,6 +17,7 @@ from javacode.classwriter import *
 from javacode.classwriter.constantpool import *
 
 # Constants
+EXP_OBJECT = 0
 EXP_IMMSTRREF = 1
 EXP_INTINDEX = 2
 EXP_STRINDEX = 3
@@ -27,6 +28,7 @@ EXP_BOOLVAL = 7
 EXP_ARRAY = 8
 EXP_INTARRAY = 9
 EXP_STRARRAY = 10
+
 
 """ Converts long toString() from ClassGen files to more sensical format """
 def typeConvert(mjc_Type):
@@ -161,6 +163,15 @@ def addInit(codeGen):
     codeGen.code.add(0xb7)
     codeGen.code.add(0x00)
     codeGen.code.add(0x06)
+    # Print message to indicate constructor was called.
+    codeGen.code.add(0xb2)
+    codeGen.code.add(0x00)
+    codeGen.code.add(0x0d)
+    codeGen.code.add(0x12)
+    codeGen.code.add(0x1c)
+    codeGen.code.add(0xb6)
+    codeGen.code.add(0x00)
+    codeGen.code.add(0x19)
     # return
     codeGen.code.add(0xb1)
     init = MethodInfo(0, 3, 4, 7, codeGen.code.size() + 12, 512, 512, codeGen.code)
@@ -172,7 +183,7 @@ def getClass(codeGen, mjc_Class, mjc_ClassType):
     codeGen.classSym = Symbol.symbol(typeConvert(mjc_Class.i.toString()))
     # Clear out global ArrayLists
     codeGen.fieldList = ArrayList()
-    codeGen.methodList = ArrayList()            
+    codeGen.methodList = ArrayList()         
     # Get parent class's fields and methods if we're extending something
     if mjc_ClassType == "extends":
         for x in range(0, mjc_Class.j.vl.size()):
