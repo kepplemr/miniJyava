@@ -15,7 +15,11 @@ public class MethodEntry extends Entry {
     }
     public Hashtable<Symbol, FieldEntry> getLocals() { return locals; }
     public String getName() { return name; }
-    public mjc_MethodType getResult() { return result; }
+    public String getResult() 
+    {
+    	System.out.println("Result -> " + result.toString());
+    	return result.toString(); 
+    }
     
 
     public MethodEntry(String n, boolean isStatic, mjc_MethodType r, Hashtable<Symbol, FieldEntry> p, 

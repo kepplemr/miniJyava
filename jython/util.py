@@ -32,13 +32,13 @@ EXP_STRARRAY = 10
 
 """ Converts long toString() from ClassGen files to more sensical format """
 def typeConvert(mjc_Type):
-    if mjc_Type[:19] == "mjc_StringArrayType":
+    if mjc_Type[:15] == "mjc_StringArray":
         return "[Ljava/lang/String;"
-    elif mjc_Type[:14] == "mjc_StringType":
+    elif mjc_Type[:10] == "mjc_String":
         return "Ljava/lang/String;"
-    elif mjc_Type[:16] == "mjc_IntArrayType":
+    elif mjc_Type[:12] == "mjc_IntArray":
         return "[I"
-    elif mjc_Type[:15] == "mjc_IntegerType":
+    elif mjc_Type[:11] == "mjc_Integer":
         return "I"
     elif mjc_Type[:15] == "mjc_BooleanType":
         return "Z"

@@ -10,7 +10,9 @@ import java_cup.runtime.*;
 %column
 
 %{
+	StringBuffer string = new StringBuffer();
     private static int num_nested_comments = 0;
+    
     private Symbol symbol(int sym) 
     {
         return new Symbol(sym, yyline+1, yycolumn+1);
@@ -23,9 +25,10 @@ import java_cup.runtime.*;
  
     private void error(String message) 
     {
-        System.out.println("Error at line "+(yyline+1)+", column "+(yycolumn+1)+" : "+message);
+        System.out.println("You messed up at line "+(yyline+1)+", column "+(yycolumn+1)+" : "+message);
     }
 %}
+
 
 LineTerminator  = \r|\n|\r\n
 WhiteSpace      = {LineTerminator} | [ \t\f]
@@ -34,8 +37,12 @@ String          = \".*\"
 ID              = [:jletter:][:jletterdigit:]*
 Comment  = "/*" [^*] ~"*/" | "//" .* {LineTerminator}
 
+StringCharacter = [^\r\n\"\\]
+%state STRING
+
 %%
-<YYINITIAL> {
+<YYINITIAL> 
+{
     "beginvars"             {return symbol(BEGINVARS_TOK); }
     "boolean"               {return symbol(BOOLTYPE_TOK); }
     "class"                 {return symbol(CLASS_TOK); }
@@ -81,8 +88,27 @@ Comment  = "/*" [^*] ~"*/" | "//" .* {LineTerminator}
     "<="                    {return symbol(LTEQ_TOK); }
     {ID}                    {return symbol(ID_TOK, yytext()); }
     {Integer}               {return symbol(INTCONST_TOK, new Integer(yytext())); }
-    {String}                {return symbol(STRCONST_TOK, yytext()); }
+    \"                      {yybegin(STRING); string.setLength(0);}
     {WhiteSpace}+           { }
     {Comment}               { }
+}
+
+<STRING> 
+{
+  \"                             { yybegin(YYINITIAL); return symbol(STRCONST_TOK, string.toString()); }
+  {StringCharacter}+             { string.append( yytext() ); }
+  
+  /* escape sequences */
+  "\\b"                          { string.append( '\b' ); }
+  "\\t"                          { string.append( '\t' ); }
+  "\\n"                          { string.append( '\n' ); }
+  "\\f"                          { string.append( '\f' ); }
+  "\\r"                          { string.append( '\r' ); }
+  "\\\""                         { string.append( '\"' ); }
+  "\\'"                          { string.append( '\'' ); }
+  "\\\\"                         { string.append( '\\' ); }
+  /* error cases */
+  \\.                            { throw new RuntimeException("Illegal escape sequence \""+yytext()+"\""); }
+  {LineTerminator}               { throw new RuntimeException("Unterminated string at end of line"); }
 }
 

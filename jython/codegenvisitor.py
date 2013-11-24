@@ -157,25 +157,34 @@ class CodeGenVisitor(VisitorAdaptor):
         self.expType = EXP_OBJECT
     @vis.when(mjc_CallExpression)
     def visit(self, node):
-        print("Call expression")
+        # Create expList
+        node.el.accept(self);
+        # Get some method info from object 
+        currSym = Symbol.symbol(mjc_Identifier(node.e.s).toString())
+        methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
+        # Discern class and method
+        className = typeConvert(methFieldEntry.toString())
+        methodName = node.i.toString()
+        method = self.symTab.getMethod(Symbol.symbol(className), Symbol.symbol(methodName))
+        self.expList += typeConvert(method.getResult())
+        print("CE ExpList -> " + self.expList)
         
     @vis.when(mjc_CallStatement)
     def visit(self, node):
         node.el.accept(self);
-        print("ExpList -> " + self.expList)
+
         methodName = node.i.toString()
         currSym = Symbol.symbol(mjc_Identifier(node.e.s).toString())
         methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
         location = methFieldEntry.getLocation()
         className = typeConvert(methFieldEntry.toString())
-        
         print("Class -> " + className)
         print("Method -> " + typeConvert(methodName))
-        
         method = self.symTab.getMethod(Symbol.symbol(className), Symbol.symbol(methodName))
         params = method.getParams()
+        ret = method.result
+        print(ret)
         ret = method.getName()
-
         print("HashTable size -> " + repr(params.size()))
         key = params.entrySet()
         iter = key.iterator()
@@ -193,8 +202,11 @@ class CodeGenVisitor(VisitorAdaptor):
         
     @vis.when(mjc_ExpList)
     def visit(self, node):
-        print("ExpList")
-        # put stuff on the stack, get formal list from symTable
+        self.expList = "("
+        for x in range (0, node.size()):
+            print("ListEle -> " + node.elementAt(x).toString())
+            self.expList += typeConvert(node.elementAt(x).toString())
+        self.expList += ")"
     
     """ Statement visitor methods """
     @vis.when(mjc_Block)
