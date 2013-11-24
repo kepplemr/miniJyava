@@ -5,6 +5,9 @@ class Test
         int arr[] = new int[10];
         arr[0] = 7;
         int test = arr[0];
+        String strArr[] = new String[10];
+        strArr[6] = "hey there";
+        String testStr = strArr[6];
     }
 
     public String test()

@@ -5,17 +5,11 @@ Created on Nov 14, 2013
 @description: Visitor class used to generate MiniJava bytecode
 '''
 from util import *
+import struct
 
 class CodeGenVisitor(VisitorAdaptor):
     # Constants
     ACCESS_PUBLIC = 1
-    EXP_INTINDEX = 2
-    EXP_STRINDEX = 3
-    EXP_LOCINTIND = 4
-    EXP_LOCSTRIND = 5
-    EXP_IMMINTVAL = 6
-    EXP_BOOLVAL = 7
-    EXP_ARRAY = 8
     ACCESS_PUBLICSTATIC = 9
     CODE_INDEX = 7
     MAX_STACK = 512
@@ -82,49 +76,54 @@ class CodeGenVisitor(VisitorAdaptor):
         comparisonExpression(self, node, "NE")
     @vis.when(mjc_IntegerLiteral)
     def visit(self, node):
-        self.expType = self.EXP_INTINDEX
+        self.expType = EXP_INTINDEX
         self.expIndex = self.constantPool.getInteger(node.i)
     @vis.when(mjc_StringLiteral)
     def visit(self, node):
-        self.expType = self.EXP_STRINDEX
+        self.expType = EXP_STRINDEX
         self.expIndex = self.constantPool.getString(node.s)
     @vis.when(mjc_True)
     def visit(self, node):
-        self.expType = self.EXP_BOOLVAL
+        self.expType = EXP_BOOLVAL
         self.expIndex = 0
         # bipush 1
         self.code.add(0x10)
         self.code.add(0x01)
     @vis.when(mjc_False)
     def visit(self, node):
-        self.expType = self.EXP_BOOLVAL
+        self.expType = EXP_BOOLVAL
         self.expIndex = 0
         #bipush 0
         self.code.add(0x10)
         self.code.add(0x00)
     @vis.when(mjc_Null)
     def visit(self, node):
-        self.expType = self.EXP_STRINDEX
+        self.expType = EXP_STRINDEX
         self.expIndex = self.constantPool.getString("null") 
     @vis.when(mjc_IdentifierExp)
     def visit(self, node):
         currSym = Symbol.symbol(mjc_Identifier(node.s).toString())
         methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
         methFieldType = typeConvert(methFieldEntry.getType().toString())
+        print("MethFIeldType -> " + methFieldType)
         self.expIndex = methFieldEntry.getLocation()
         if methFieldType == "I":
-            self.expType = self.EXP_LOCINTIND
+            self.expType = EXP_LOCINTIND
         elif methFieldType == "Ljava/lang/String;":
-            self.expType = self.EXP_LOCSTRIND
+            self.expType = EXP_LOCSTRIND
+        elif methFieldType == "[I":
+            self.expType = EXP_INTARRAY
+        elif methFieldType == "[Ljava/lang/String;":
+            self.expType = EXP_STRARRAY
     @vis.when(mjc_NewArray)
     def visit(self, node):
         node.e.accept(self)
-        self.expType = self.EXP_ARRAY
+        self.expType = EXP_ARRAY
     @vis.when(mjc_ArrayLookup)
     def visit(self, node):
-        print("Arraylookup")
         # find location of array
         node.e1.accept(self)
+        arrayType = self.expType
         # aload <arrayLocation>
         self.code.add(0x19)
         self.code.add(self.expIndex)
@@ -132,9 +131,14 @@ class CodeGenVisitor(VisitorAdaptor):
         # ldc <arrayIndex>
         self.code.add(0x12)
         self.code.add(self.expIndex)
-        # iaload
-        self.code.add(0x2e)
-        self.expType = self.EXP_IMMINTVAL
+        if arrayType == EXP_INTARRAY:
+            # iaload
+            self.code.add(0x2e)
+            self.expType = EXP_IMMINTVAL
+        elif arrayType == EXP_STRARRAY:
+            # aaload
+            self.code.add(0x32)
+            self.expType = EXP_IMMSTRREF
     
     """ Statement visitor methods """
     @vis.when(mjc_Block)
@@ -149,17 +153,17 @@ class CodeGenVisitor(VisitorAdaptor):
         self.code.add(0x0d)
         # handle EXP to print
         node.e.accept(self)
-        if self.expType == self.EXP_INTINDEX:
+        if self.expType == EXP_INTINDEX:
             printCpIntIndex(self)
-        elif self.expType == self.EXP_STRINDEX:
+        elif self.expType == EXP_STRINDEX:
             printCpStrIndex(self)
-        elif self.expType == self.EXP_IMMINTVAL:
+        elif self.expType == EXP_IMMINTVAL:
             printImmIntVal(self)
-        elif self.expType == self.EXP_LOCINTIND:
+        elif self.expType == EXP_LOCINTIND:
             printLocInt(self)
-        elif self.expType == self.EXP_LOCSTRIND:
+        elif self.expType == EXP_LOCSTRIND:
             printLocString(self)
-        elif self.expType == self.EXP_BOOLVAL:
+        elif self.expType == EXP_BOOLVAL:
             printImmBoolVal(self)
     @vis.when(mjc_Assign)
     def visit(self, node):
@@ -167,31 +171,32 @@ class CodeGenVisitor(VisitorAdaptor):
         methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
         location = methFieldEntry.getLocation()
         node.e.accept(self)
-        if self.expType == self.EXP_INTINDEX:
+        if self.expType == EXP_INTINDEX:
             self.code.add(0x12)
             self.code.add(self.expIndex)
             # istore <location>
             self.code.add(0x36)
             self.code.add(location)
-        elif self.expType == self.EXP_STRINDEX:
+        elif self.expType == EXP_STRINDEX:
             self.code.add(0x12)
             self.code.add(self.expIndex)
             # astore <location>
             self.code.add(0x3a)
             self.code.add(location)
-        elif self.expType == self.EXP_IMMINTVAL:
+        elif self.expType == EXP_IMMINTVAL:
             # istore <location>
             self.code.add(0x36)
             self.code.add(location)
-        else:
-            self.code.add(0x12)
-            self.code.add(self.expIndex)
-            # newarray(int)
-            self.code.add(0xbc)
-            self.code.add(0x0a)
+        elif self.expType == EXP_IMMSTRREF:
             # astore <location>
             self.code.add(0x3a)
             self.code.add(location)
+        elif self.expType == EXP_ARRAY:
+            methFieldType = typeConvert(methFieldEntry.getType().toString())
+            if methFieldType == "[I":
+                newIntArray(self, self.expIndex, location)
+            else:
+                newStringArray(self, self.expIndex, location)
     @vis.when(mjc_ArrayAssign)
     def visit(self, node):
         currSym = Symbol.symbol(node.i.toString())
@@ -209,8 +214,12 @@ class CodeGenVisitor(VisitorAdaptor):
         node.e2.accept(self)
         self.code.add(0x12)
         self.code.add(self.expIndex)
-        # iastore
-        self.code.add(0x4f)
+        if methFieldType == "[I":
+            # iastore
+            self.code.add(0x4f)
+        elif methFieldType == "[Ljava/lang/String;":
+            # aastore
+            self.code.add(0x53)
     
     """ Method visitor methods """
     @vis.when(mjc_MethodDeclSimple)

@@ -16,6 +16,18 @@ from javacode.syntaxtree import *
 from javacode.classwriter import *
 from javacode.classwriter.constantpool import *
 
+# Constants
+EXP_IMMSTRREF = 1
+EXP_INTINDEX = 2
+EXP_STRINDEX = 3
+EXP_LOCINTIND = 4
+EXP_LOCSTRIND = 5
+EXP_IMMINTVAL = 6
+EXP_BOOLVAL = 7
+EXP_ARRAY = 8
+EXP_INTARRAY = 9
+EXP_STRARRAY = 10
+
 def typeConvert(mjc_Type):
     if mjc_Type[:19] == "mjc_StringArrayType":
         return "[Ljava/lang/String;"
@@ -101,7 +113,7 @@ def arithmeticExpression(codeGen, mjc_Exp, mjc_OpType):
         codeGen.code.add(0x68)
     elif mjc_OpType == "Div":
         codeGen.code.add(0x6c)  
-    codeGen.expType = codeGen.EXP_IMMINTVAL
+    codeGen.expType = EXP_IMMINTVAL
         
 def comparisonExpression(codeGen, mjc_Exp, mjc_OpType):
     codeGen.expIndex = 0
@@ -137,7 +149,7 @@ def comparisonExpression(codeGen, mjc_Exp, mjc_OpType):
     # bipush 1
     codeGen.code.add(0x10)
     codeGen.code.add(0x01)
-    codeGen.expType = codeGen.EXP_BOOLVAL
+    codeGen.expType = EXP_BOOLVAL
         
 """ Add default <init> constructor """
 def addInit(codeGen):
@@ -197,3 +209,26 @@ def getMethod(codeGen, mjc_Method, mjc_MethType):
     else:
         method = MethodInfo(codeGen.ACCESS_PUBLIC, nameIndex, typeIndex, codeGen.CODE_INDEX, codeGen.code.size()+12, codeGen.MAX_STACK, maxLocals, codeGen.code)
     codeGen.methodList.add(method)
+    
+""" Array Creation Functions """
+def newStringArray(codeGen, size, location):
+    # push size of array to stack
+    codeGen.code.add(0x12)
+    codeGen.code.add(size)
+    # anewarray (String class)
+    codeGen.code.add(0xbd)
+    strInd = codeGen.constantPool.getClass("java/lang/String")
+    codeGen.code.add(0x00)
+    codeGen.code.add(strInd)
+    # astore <location>
+    codeGen.code.add(0x3a)
+    codeGen.code.add(location)
+def newIntArray(codeGen, size, location):
+    codeGen.code.add(0x12)
+    codeGen.code.add(size)
+    # newarray(int)
+    codeGen.code.add(0xbc)
+    codeGen.code.add(0x0a)
+    # astore <location>
+    codeGen.code.add(0x3a)
+    codeGen.code.add(location)

@@ -476,6 +476,12 @@ Exp ::= Exp:e1 MUL_TOK Exp:e2
         System.out.println("Exp -> new int[EXP]");
     RESULT = new mjc_NewArray(e1);
 :}
+| NEW_TOK STRING_TOK LBRACKET_TOK Exp:e1 RBRACKET_TOK
+{:
+	if (parser.debug)
+		System.out.println("Exp -> new String[EXP];");
+	RESULT = new mjc_NewArray(e1);
+:}
 | NEW_TOK ID_TOK:id LPAREN_TOK RPAREN_TOK
 {:
     if (parser.debug)

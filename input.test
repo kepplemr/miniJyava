@@ -8,6 +8,8 @@ class Test
             int testInt;
             String testString;
             int[] arr;
+            String[] testStrArr;
+            String testStr;
         endvars
         {
             System.out.println("Testing println stuff:");
@@ -45,6 +47,10 @@ class Test
             arr[1] = 7;
             testInt = arr[1];
             System.out.println(testInt);
+            testStrArr = new String[5];
+            testStrArr[1] = "seven";
+            testStr = testStrArr[1];
+            System.out.println(testStr);
         }
         return 0;
     }
