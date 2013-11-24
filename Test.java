@@ -11,8 +11,9 @@ class Test2
 {
     public Test2() {}
 
-    public void callMe()
+    public int[] callMe()
     {
-        System.out.println("Hey");
+        int[] att = new int[5];
+        return att;
     }
 }

@@ -58,20 +58,44 @@ class Test
             System.out.println("$$$ Testing objects: $$$");
             X = new Test();
             Y = new Test2();
-            X.callMe();
+            testInt = Y.callMe("test", 42);
         }
-        return 0;
-    }
-
-    public int callMe()
-    {
-        beginvars
-        endvars
-        System.out.println("Heeeey");
         return 0;
     }
 }
 
 class Test2
 {
+    public int callMe(String strParam, int intParam)
+    {
+        beginvars
+        endvars
+        System.out.println("Hey");
+        return 0;
+    }
+
+    public int[] callMe2() 
+    {
+        beginvars
+            int[] intArr;
+        endvars
+        intArr = new int[5];
+        return intArr;
+    }
+
+    public String[] callMe4() 
+    {
+        beginvars
+            String[] strArr;
+        endvars
+        strArr = new String[5];
+        return strArr;
+    }
+
+    public boolean callMe5() 
+    {
+        beginvars
+        endvars
+        return true;
+    }
 }

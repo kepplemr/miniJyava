@@ -46,11 +46,16 @@ def typeConvert(mjc_Type):
         start = mjc_Type.index('(') + len('(')
         end = mjc_Type.index(')', start)
         id = mjc_Type[start:end].strip()
-        return "L" + id + ";"
-    elif mjc_Type[:14] == ("mjc_Identifier"):
+        return "" + id + ""
+    elif mjc_Type[:14] == "mjc_Identifier":
         start = mjc_Type.index('(') + len('(')
         end = mjc_Type.index(')', start)
         return mjc_Type[start:end].strip()
+    elif mjc_Type[:20] == "mjc_MethodReturnType":
+        start = mjc_Type.index('(') + len('(')
+        end = mjc_Type.index('(', start)
+        type = mjc_Type[start:end].strip()
+        return typeConvert(type)
     else:
         return "V"
     
@@ -176,6 +181,36 @@ def addInit(codeGen):
     codeGen.code.add(0xb1)
     init = MethodInfo(0, 3, 4, 7, codeGen.code.size() + 12, 512, 512, codeGen.code)
     codeGen.methodList.add(init)
+    
+""" Handle the calculation/encoding of method return value """
+def handleReturn(codeGen, mjc_Method):
+    mjc_Method.e.accept(codeGen)
+    ret = typeConvert(mjc_Method.t.toString())
+    if ret != "V":
+        if ret == "I" or ret == "Z":
+            # ldc <index>
+            codeGen.code.add(0x12)
+            codeGen.code.add(codeGen.expIndex)
+            # ireturn
+            codeGen.code.add(0xac)
+        elif "[Ljava/lang/String;":
+            #print(codeGen.symTab.toString())
+            classEntry = codeGen.symTab.getClass(codeGen.classSym)
+            methEntry = codeGen.symTab.getMethod(codeGen.classSym, codeGen.methodSym)
+            localName = typeConvert(mjc_Method.e.toString())
+            localId = mjc_Identifier(localName)
+            sym = Symbol.symbol(str(localId))
+            methFieldEntry = codeGen.symTab.getMethodLocal(codeGen.classSym, codeGen.methodSym, sym)
+            location = methFieldEntry.getLocation()
+            # aload <index>
+            codeGen.code.add(0x19)
+            codeGen.code.add(location)
+            # areturn
+            codeGen.code.add(0xb0)
+    else:
+        # empty return opcode
+        codeGen.code.add(0xb1)
+        
    
 """ Macro class/method level functions """ 
 def getClass(codeGen, mjc_Class, mjc_ClassType):
@@ -214,8 +249,7 @@ def getMethod(codeGen, mjc_Method, mjc_MethType):
     # Handle method statements
     for x in range(0, mjc_Method.sl.size()):
         mjc_Method.sl.elementAt(x).accept(codeGen)
-    # empty return opcode
-    codeGen.code.add(0xb1)
+    handleReturn(codeGen, mjc_Method)
     if mjc_MethType == "static":
         method = MethodInfo(codeGen.ACCESS_PUBLICSTATIC, nameIndex, typeIndex, codeGen.CODE_INDEX, codeGen.code.size()+12, codeGen.MAX_STACK, maxLocals, codeGen.code)
     else:

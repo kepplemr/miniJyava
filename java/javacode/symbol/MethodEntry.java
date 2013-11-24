@@ -9,9 +9,14 @@ public class MethodEntry extends Entry {
     Hashtable<Symbol, FieldEntry> params;	// String name is key and FieldEntry is the value
     Hashtable<Symbol, FieldEntry> locals;	// String name is key and FieldEntry is the value
 
-    public Hashtable<Symbol, FieldEntry> getParams() { return params; }
+    public Hashtable<Symbol, FieldEntry> getParams() 
+    {
+    	return params; 
+    }
     public Hashtable<Symbol, FieldEntry> getLocals() { return locals; }
     public String getName() { return name; }
+    public mjc_MethodType getResult() { return result; }
+    
 
     public MethodEntry(String n, boolean isStatic, mjc_MethodType r, Hashtable<Symbol, FieldEntry> p, 
     				   Hashtable<Symbol, FieldEntry> l) {

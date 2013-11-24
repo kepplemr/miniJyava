@@ -5,7 +5,7 @@ Created on Nov 14, 2013
 @description: Visitor class used to generate MiniJava bytecode
 '''
 from util import *
-import struct
+import java.util.Hashtable as Hashtable
 
 class CodeGenVisitor(VisitorAdaptor):
     # Constants
@@ -25,6 +25,7 @@ class CodeGenVisitor(VisitorAdaptor):
     fieldList = ArrayList()
     methodList = ArrayList()
     code = ArrayList()
+    expList = ""
     
     # Index's
     expType = 0
@@ -154,17 +155,46 @@ class CodeGenVisitor(VisitorAdaptor):
         self.code.add(0x00)
         self.code.add(initRef)
         self.expType = EXP_OBJECT
+    @vis.when(mjc_CallExpression)
+    def visit(self, node):
+        print("Call expression")
+        
     @vis.when(mjc_CallStatement)
     def visit(self, node):
-        print("Call statement")
-        #currSym = Symbol.symbol(node.i.toString())
-        #methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
-        #location = methFieldEntry.getLocation()
+        node.el.accept(self);
+        print("ExpList -> " + self.expList)
+        methodName = node.i.toString()
+        currSym = Symbol.symbol(mjc_Identifier(node.e.s).toString())
+        methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
+        location = methFieldEntry.getLocation()
+        className = typeConvert(methFieldEntry.toString())
+        
+        print("Class -> " + className)
+        print("Method -> " + typeConvert(methodName))
+        
+        method = self.symTab.getMethod(Symbol.symbol(className), Symbol.symbol(methodName))
+        params = method.getParams()
+        ret = method.getName()
+
+        print("HashTable size -> " + repr(params.size()))
+        key = params.entrySet()
+        iter = key.iterator()
+        while iter.hasNext():
+            print(typeConvert(str(iter.next())))      
+        #type = "("
+        #for x in range (0, mjc_Method.fl.size()):
+        #    type += typeConvert(mjc_Method.fl.elementAt(x).t.toString())
+        #type += ")"
+        #type += typeConvert(mjc_Method.t.toString())
         # aload <object>
-        #self.code.add(0x19)
-        #self.code.add(location)
+        self.code.add(0x19)
+        self.code.add(location)
+        self.expType = EXP_OBJECT
         
-        
+    @vis.when(mjc_ExpList)
+    def visit(self, node):
+        print("ExpList")
+        # put stuff on the stack, get formal list from symTable
     
     """ Statement visitor methods """
     @vis.when(mjc_Block)
