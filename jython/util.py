@@ -189,7 +189,7 @@ def handleReturn(codeGen, mjc_Method):
     if ret != "V":
         if ret == "I" or ret == "Z":
             # ldc <index>
-            codeGen.code.add(0x12)
+            codeGen.code.add(0x10)
             codeGen.code.add(codeGen.expIndex)
             # ireturn
             codeGen.code.add(0xac)
@@ -209,8 +209,19 @@ def handleReturn(codeGen, mjc_Method):
     else:
         # empty return opcode
         codeGen.code.add(0xb1)
+
+""" Create/return CP reference to methodRef entry """    
+def getMethodReference(codeGen, mjc_Call, args):
+    currSym = Symbol.symbol(mjc_Identifier(mjc_Call.e.s).toString())
+    methFieldEntry = codeGen.symTab.getMethodLocal(codeGen.classSym, codeGen.methodSym, currSym)
+    location = methFieldEntry.getLocation()
+    # Discern class and method
+    className = typeConvert(methFieldEntry.toString())
+    methodName = mjc_Call.i.toString()
+    method = codeGen.symTab.getMethod(Symbol.symbol(className), Symbol.symbol(methodName))
+    codeGen.expList += typeConvert(method.getResult())
+    reference = codeGen.constantPool.getMethodInfo(className, typeConvert(methodName), args)
         
-   
 """ Macro class/method level functions """ 
 def getClass(codeGen, mjc_Class, mjc_ClassType):
     # Set class symbol marker
@@ -244,7 +255,8 @@ def getMethod(codeGen, mjc_Method, mjc_MethType):
     type += typeConvert(mjc_Method.t.toString())
     nameIndex = codeGen.constantPool.getUtf8(typeConvert(mjc_Method.i.toString()))
     typeIndex = codeGen.constantPool.getUtf8(type)
-    maxLocals = mjc_Method.fl.size() + mjc_Method.vl.size()
+    # locals = params + locals + possible return value
+    maxLocals = mjc_Method.fl.size() + mjc_Method.vl.size() + 1
     # Handle method statements
     for x in range(0, mjc_Method.sl.size()):
         mjc_Method.sl.elementAt(x).accept(codeGen)

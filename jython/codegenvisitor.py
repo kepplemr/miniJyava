@@ -159,14 +159,32 @@ class CodeGenVisitor(VisitorAdaptor):
     def visit(self, node):
         # Create expList
         node.el.accept(self);
-        # Get some method info from object 
-        currSym = Symbol.symbol(mjc_Identifier(node.e.s).toString())
-        methFieldEntry = self.symTab.getMethodLocal(self.classSym, self.methodSym, currSym)
-        # Discern class and method
-        className = typeConvert(methFieldEntry.toString())
-        methodName = node.i.toString()
-        method = self.symTab.getMethod(Symbol.symbol(className), Symbol.symbol(methodName))
-        self.expList += typeConvert(method.getResult())
+        methRef = getMethodReference(self, node, self.expList)
+        # push args on stack in expList
+        
+        # ppsh hardcoded (for now) params on stack
+        #self.code.add(0x12)
+        #self.code.add(0x1c)
+        #self.code.add(0x12)
+        #self.code.add(0x20)
+        #self.code.add(0x10)
+        #self.code.add(0x01)
+        #self.code.add(0x10)
+        #self.code.add(0x02)
+        
+        # aload <object>
+        self.code.add(0x19)
+        self.code.add(location)
+        
+        # invokevirtual <method>
+        self.code.add(0xb6)
+        self.code.add(0x00)
+        self.code.add(reference)
+        
+        # pop int return
+        #self.code.add(0x57)
+        
+        self.expType = EXP_IMMINTVAL
         print("CE ExpList -> " + self.expList)
         
     @vis.when(mjc_CallStatement)
