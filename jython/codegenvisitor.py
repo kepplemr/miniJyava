@@ -194,10 +194,9 @@ class CodeGenVisitor(VisitorAdaptor):
         self.expList = "("
         for x in range (0, node.size()):
             node.elementAt(x).accept(self)
-            # int
-            if self.expType == 2:
-                self.code.add(0x10)
-                self.code.add(0x01)
+            if self.expType == EXP_INTINDEX:
+                self.code.add(0x12)
+                self.code.add(self.expIndex)
             self.expList += typeConvert(node.elementAt(x).toString())
         self.expList += ")"
     

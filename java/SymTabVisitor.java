@@ -85,13 +85,13 @@ public class SymTabVisitor extends VisitorAdaptor
     public void visit(mjc_MethodDeclSimple md)
     {
         fields = new ArrayList<FieldEntry>();
-        int location = 0;
+        int location = 1;
         // Handle parameters
         for (int i = 0; i < md.fl.size(); i++)
         {
             md.fl.elementAt(i).accept(this);
-        	fields.get(i).setLocation(i);
-        	location++;
+            // Local zero gets object reference
+        	fields.get(i).setLocation(i+1);
         }
         ArrayList<FieldEntry> params = new ArrayList<FieldEntry>(fields);
         fields = new ArrayList<FieldEntry>();
@@ -111,12 +111,12 @@ public class SymTabVisitor extends VisitorAdaptor
     public void visit(mjc_MethodDeclStatic md)
     {
         fields = new ArrayList<FieldEntry>();
-        int location = 0;
+        int location = 1;
         // Handle parameters
         for (int i = 0; i < md.fl.size(); i++)
         {
             md.fl.elementAt(i).accept(this);
-            fields.get(i).setLocation(i);
+            fields.get(i).setLocation(i+1);
             location++;
         }
         ArrayList<FieldEntry> params = new ArrayList<FieldEntry>(fields);

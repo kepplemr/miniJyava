@@ -31,6 +31,7 @@ EXP_BOOLVAL = 7
 EXP_ARRAY = 8
 EXP_INTARRAY = 9
 EXP_STRARRAY = 10
+EXP_IDENTIFIER = 11
 
 
 """ Converts long toString() from ClassGen files to more sensical format """
@@ -193,10 +194,16 @@ def handleReturn(codeGen, mjc_Method):
     ret = typeConvert(mjc_Method.t.toString())
     if ret != "V":
         if ret == "I" or ret == "Z":
-            # ldc <index>
-            codeGen.code.add(0x10)
-            codeGen.code.add(codeGen.expIndex)
-            # ireturn
+            if codeGen.expType == EXP_LOCINTIND:
+                #print(mjc_Method.e.s)
+                #location = getLocation(codeGen, codeGen.classSym, codeGen.methodSym, mjc_Method.e.s)
+                codeGen.code.add(0x15)
+                codeGen.code.add(codeGen.expIndex)
+            else:
+                # ldc <index>
+                codeGen.code.add(0x12)
+                codeGen.code.add(codeGen.expIndex)
+                # ireturn
             codeGen.code.add(0xac)
         elif "[Ljava/lang/String;":
             classEntry = codeGen.symTab.getClass(codeGen.classSym)
@@ -234,7 +241,6 @@ def getLocation(codeGen, classSym, methodSym, local):
         methFieldEntry = codeGen.symTab.getMethodLocal(codeGen.classSym, codeGen.methodSym, currSym)
         return methFieldEntry.getLocation()
     except:
-        currSym = Symbol.symbol(mjc_Identifier(local).toString())
         methFieldEntry = codeGen.symTab.getMethodParam(codeGen.classSym, codeGen.methodSym, currSym)
         return methFieldEntry.getLocation()                
 
