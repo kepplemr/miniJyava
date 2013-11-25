@@ -1,5 +1,4 @@
 package javacode.symbol;
-
 import java.util.ArrayList;
 import javacode.syntaxtree.mjc_BooleanType;
 import javacode.syntaxtree.mjc_IntegerType;
@@ -45,8 +44,17 @@ public class Table
 	}
 
 	public FieldEntry getMethodLocal(Symbol classKey, Symbol methodName, Symbol localName)
+	throws IllegalArgumentException
 	{
-		return getClass(classKey).getMethod(methodName).getLocal(localName);
+		try
+		{
+			FieldEntry fe = getClass(classKey).getMethod(methodName).getLocal(localName);
+			return fe;
+		}
+		catch (Exception ex)
+		{
+			throw new IllegalArgumentException();
+		}
 	}
 
 	/**

@@ -17,7 +17,6 @@ public class MethodEntry extends Entry {
     public String getName() { return name; }
     public String getResult() 
     {
-    	System.out.println("Result -> " + result.toString());
     	return result.toString(); 
     }
     

@@ -10,6 +10,9 @@ from os.path import dirname, realpath, sep, pardir
 temp = sep + pardir + sep + pardir + sep
 sys.path.append(dirname(realpath(__file__)) + temp + "classes")
 import java.util.ArrayList as ArrayList
+
+import java.lang.IllegalArgumentException
+
 from javacode import *
 from javacode.symbol import *
 from javacode.syntaxtree import *
@@ -38,6 +41,8 @@ def typeConvert(mjc_Type):
         return "Ljava/lang/String;"
     elif mjc_Type[:12] == "mjc_IntArray":
         return "[I"
+    #elif mjc_Type[:15] == "mjc_IntegerType":
+    #    pass
     elif mjc_Type[:11] == "mjc_Integer":
         return "I"
     elif mjc_Type[:15] == "mjc_BooleanType":
@@ -210,17 +215,40 @@ def handleReturn(codeGen, mjc_Method):
         # empty return opcode
         codeGen.code.add(0xb1)
 
+""" Return type of field """
+def getFieldType(codeGen, classSym, methodSym, field):
+    currSym = Symbol.symbol(mjc_Identifier(field).toString())
+    try:
+        methFieldEntry = codeGen.symTab.getMethodLocal(codeGen.classSym, codeGen.methodSym, currSym)
+        return typeConvert(methFieldEntry.getType().toString())
+    # Current Jython is buggy with specific Java exceptions; catch IllegalArgumentException here.
+    except:
+        methFieldEntry = codeGen.symTab.getMethodParam(codeGen.classSym, codeGen.methodSym, currSym)
+        return typeConvert(methFieldEntry.getType().toString())
+
+""" Returns relative location of local variable on method stack. """
+def getLocation(codeGen, classSym, methodSym, local):
+    currSym = Symbol.symbol(mjc_Identifier(local).toString())
+    # Current Jython is buggy with specific Java exceptions; catch IllegalArgumentException here.
+    try:
+        methFieldEntry = codeGen.symTab.getMethodLocal(codeGen.classSym, codeGen.methodSym, currSym)
+        return methFieldEntry.getLocation()
+    except:
+        currSym = Symbol.symbol(mjc_Identifier(local).toString())
+        methFieldEntry = codeGen.symTab.getMethodParam(codeGen.classSym, codeGen.methodSym, currSym)
+        return methFieldEntry.getLocation()                
+
 """ Create/return CP reference to methodRef entry """    
-def getMethodReference(codeGen, mjc_Call, args):
-    currSym = Symbol.symbol(mjc_Identifier(mjc_Call.e.s).toString())
+def getMethodReference(codeGen, invokedObj):
+    currSym = Symbol.symbol(mjc_Identifier(invokedObj.e.s).toString())
     methFieldEntry = codeGen.symTab.getMethodLocal(codeGen.classSym, codeGen.methodSym, currSym)
-    location = methFieldEntry.getLocation()
     # Discern class and method
     className = typeConvert(methFieldEntry.toString())
-    methodName = mjc_Call.i.toString()
+    methodName = invokedObj.i.toString()
     method = codeGen.symTab.getMethod(Symbol.symbol(className), Symbol.symbol(methodName))
     codeGen.expList += typeConvert(method.getResult())
-    reference = codeGen.constantPool.getMethodInfo(className, typeConvert(methodName), args)
+    reference = codeGen.constantPool.getMethodInfo(className, typeConvert(methodName), codeGen.expList)
+    return reference
         
 """ Macro class/method level functions """ 
 def getClass(codeGen, mjc_Class, mjc_ClassType):
@@ -248,6 +276,9 @@ def getMethod(codeGen, mjc_Method, mjc_MethType):
     # Set method symbol marker
     codeGen.methodSym = Symbol.symbol(mjc_Method.i.toString())
     codeGen.code = ArrayList()
+    ######################################################
+    # TODO: move this to formallist
+    ######################################################
     type = "("
     for x in range (0, mjc_Method.fl.size()):
         type += typeConvert(mjc_Method.fl.elementAt(x).t.toString())

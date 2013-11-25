@@ -85,16 +85,21 @@ public class SymTabVisitor extends VisitorAdaptor
     public void visit(mjc_MethodDeclSimple md)
     {
         fields = new ArrayList<FieldEntry>();
+        int location = 0;
         // Handle parameters
         for (int i = 0; i < md.fl.size(); i++)
+        {
             md.fl.elementAt(i).accept(this);
+        	fields.get(i).setLocation(i);
+        	location++;
+        }
         ArrayList<FieldEntry> params = new ArrayList<FieldEntry>(fields);
         fields = new ArrayList<FieldEntry>();
         // Handle locals
         for (int i = 0; i < md.vl.size(); i++)
         {
             md.vl.elementAt(i).accept(this);
-            fields.get(i).setLocation(i);
+            fields.get(i).setLocation(location + i);
         }
         ArrayList<FieldEntry> locals = new ArrayList<FieldEntry>(fields);
         MethodEntry me = new MethodEntry(md.i.toString(), false, md.t, params, locals);
@@ -106,16 +111,21 @@ public class SymTabVisitor extends VisitorAdaptor
     public void visit(mjc_MethodDeclStatic md)
     {
         fields = new ArrayList<FieldEntry>();
+        int location = 0;
         // Handle parameters
         for (int i = 0; i < md.fl.size(); i++)
+        {
             md.fl.elementAt(i).accept(this);
+            fields.get(i).setLocation(i);
+            location++;
+        }
         ArrayList<FieldEntry> params = new ArrayList<FieldEntry>(fields);
         fields = new ArrayList<FieldEntry>();
         // Handle locals
         for (int i = 0; i < md.vl.size(); i++)
         {
             md.vl.elementAt(i).accept(this);
-            fields.get(i).setLocation(i);
+            fields.get(i).setLocation(location + i);
         }
         ArrayList<FieldEntry> locals = new ArrayList<FieldEntry>(fields);
         MethodEntry me = new MethodEntry(md.i.toString(), false, md.t, params, locals);

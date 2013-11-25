@@ -58,7 +58,7 @@ class Test
             System.out.println("$$$ Testing objects: $$$");
             X = new Test();
             Y = new Test2();
-            testInt = Y.callMe();
+            testInt = Y.callMe(337, 42);
         }
         return 0;
     }
@@ -66,11 +66,18 @@ class Test
 
 class Test2
 {
-    public int callMe()
+    public int callMe(int i0, int i1)
     {
         beginvars
+            int i4;
+            int i2;
         endvars
+        i2 = 3;
+        i0 = 42;
         System.out.println("Called!");
+        System.out.println(i0);
+        System.out.println(i2);
+        System.out.println(i1);
         return 0;
     }
 
