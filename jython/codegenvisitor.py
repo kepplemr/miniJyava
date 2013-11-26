@@ -116,27 +116,19 @@ class CodeGenVisitor(VisitorAdaptor):
     @vis.when(mjc_NewArray)
     def visit(self, node):
         node.e.accept(self)
-        self.expType = EXP_ARRAY
+        self.expType = EXP_NEWARRAY
     @vis.when(mjc_ArrayLookup)
     def visit(self, node):
         # find location of array
         node.e1.accept(self)
         arrayType = self.expType
-        # aload <arrayLocation>
-        self.code.add(0x19)
-        self.code.add(self.expIndex)
+        # push arrayRef to stack
+        pushToStack(self, EXP_LOCOBJECT, self.expIndex, None)
         node.e2.accept(self)
-        # ldc <arrayIndex>
-        self.code.add(0x12)
-        self.code.add(self.expIndex)
-        if arrayType == EXP_INTARRAY:
-            # iaload
-            self.code.add(0x2e)
-            self.expType = EXP_IMMINTVAL
-        elif arrayType == EXP_STRARRAY:
-            # aaload
-            self.code.add(0x32)
-            self.expType = EXP_IMMSTRREF
+        # push arrayIndex to stack
+        pushToStack(self, self.expType, self.expIndex, None)
+        # push found arrayVal to stack
+        pushToStack(self, arrayType, self.expIndex, None)
     @vis.when(mjc_NewObject)
     def visit(self, node):
         className = typeConvert(node.i.toString())
@@ -153,50 +145,16 @@ class CodeGenVisitor(VisitorAdaptor):
         self.code.add(0x00)
         self.code.add(initRef)
         self.expType = EXP_OBJECT
-        
-    """ Call methods """
     @vis.when(mjc_CallExpression)
     def visit(self, node):
-        # Find local location of invoked object and load it
         objLocation = getLocation(self, self.classSym, self.methodSym, node.e.s)
-        # aload <object>
-        self.code.add(0x19)
-        self.code.add(objLocation)
-        # Create method type based off ExpList arguments and push them on stack
-        node.el.accept(self);
-        methRef = getMethodReference(self, node)        
-        # invokevirtual <method>
-        self.code.add(0xb6)
-        self.code.add(0x00)
-        self.code.add(methRef)
-        # $$$$$$$$$$$$
-        self.expType = EXP_IMMINTVAL  
-    @vis.when(mjc_CallStatement)
-    def visit(self, node):
-        # Find local location of invoked object and load it
-        objLocation = getLocation(self, self.classSym, self.methodSym, node.e.s)
-        node.el.accept(self);
-        # aload <object>
-        self.code.add(0x19)
-        self.code.add(objLocation)
-        # Create method type based off ExpList arguments and push them on stack
-        node.el.accept(self);
-        methRef = getMethodReference(self, node)        
-        # invokevirtual <method>
-        self.code.add(0xb6)
-        self.code.add(0x00)
-        self.code.add(methRef)
-        # $$$$$$$$$$$$
-        self.expType = EXP_IMMINTVAL
-        
+        getCall(self, node, objLocation)        
     @vis.when(mjc_ExpList)
     def visit(self, node):
         self.expList = "("
         for x in range (0, node.size()):
             node.elementAt(x).accept(self)
-            if self.expType == EXP_INTINDEX:
-                self.code.add(0x12)
-                self.code.add(self.expIndex)
+            pushToStack(self, self.expType, self.expIndex, None)
             self.expList += typeConvert(node.elementAt(x).toString())
         self.expList += ")"
     
@@ -208,6 +166,10 @@ class CodeGenVisitor(VisitorAdaptor):
         print("FormalList!")
     
     """ Statement visitor methods """
+    @vis.when(mjc_CallStatement)
+    def visit(self, node):
+        objLocation = getLocation(self, self.classSym, self.methodSym, node.e.s)
+        getCall(self, node, objLocation)
     @vis.when(mjc_Block)
     def visit(self, node):
         for x in range(0, node.sl.size()):
@@ -237,55 +199,18 @@ class CodeGenVisitor(VisitorAdaptor):
         location = getLocation(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
         methFieldType = getFieldType(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
         node.e.accept(self)
-        if self.expType == EXP_INTINDEX:
-            self.code.add(0x12)
-            self.code.add(self.expIndex)
-            # istore <location>
-            self.code.add(0x36)
-            self.code.add(location)
-        elif self.expType == EXP_OBJECT:
-            self.code.add(0x3a)
-            self.code.add(location)
-        elif self.expType == EXP_STRINDEX:
-            self.code.add(0x12)
-            self.code.add(self.expIndex)
-            # astore <location>
-            self.code.add(0x3a)
-            self.code.add(location)
-        elif self.expType == EXP_IMMINTVAL:
-            # istore <location>
-            self.code.add(0x36)
-            self.code.add(location)
-        elif self.expType == EXP_IMMSTRREF:
-            # astore <location>
-            self.code.add(0x3a)
-            self.code.add(location)
-        elif self.expType == EXP_ARRAY:
-            if methFieldType == "[I":
-                newIntArray(self, self.expIndex, location)
-            else:
-                newStringArray(self, self.expIndex, location)
+        pushToStack(self, self.expType, self.expIndex, methFieldType)
+        popToLocal(self, self.expType, location)        
     @vis.when(mjc_ArrayAssign)
     def visit(self, node):
         location = getLocation(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
         methFieldType = getFieldType(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
+        pushToStack(self, EXP_LOCOBJECT, location, None)
         node.e1.accept(self)
-        # retrieve array reference from local variable
-        self.code.add(0x19)
-        self.code.add(location)
-        # ldc <cpIntArrayIndex>
-        self.code.add(0x12)
-        self.code.add(self.expIndex)
-        # ldc <valToStore>
+        pushToStack(self, self.expType, self.expIndex, None)
         node.e2.accept(self)
-        self.code.add(0x12)
-        self.code.add(self.expIndex)
-        if methFieldType == "[I":
-            # iastore
-            self.code.add(0x4f)
-        elif methFieldType == "[Ljava/lang/String;":
-            # aastore
-            self.code.add(0x53)
+        pushToStack(self, self.expType, self.expIndex, None)
+        popToLocal(self, EXP_INTARRAY, None) if methFieldType == "[I" else popToLocal(self, EXP_STRARRAY, None)
     
     """ Method visitor methods """
     @vis.when(mjc_MethodDeclSimple)
