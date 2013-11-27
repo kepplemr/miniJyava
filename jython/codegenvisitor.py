@@ -14,20 +14,17 @@ class CodeGenVisitor(VisitorAdaptor):
     CODE_INDEX = 7
     MAX_STACK = 512
     
-    # Symbol markers
+    # Class fields/index's
     classSym = Symbol.symbol("")
     methodSym = Symbol.symbol("")
-    
-    # Class fields
     symTab = Table.getInstance()
     codeGener = CodeGenerator()
     constantPool = ConstantPoolIndexer()
     fieldList = ArrayList()
     methodList = ArrayList()
     code = ArrayList()
+    formalList = ""
     expList = ""
-    
-    # Index's
     expType = 0
     expIndex = 0
     
@@ -167,12 +164,16 @@ class CodeGenVisitor(VisitorAdaptor):
             pushToStack(self, self.expType, self.expIndex, None)
         self.expList += ")"
     
+    """ Formal/FormalList visitor methods """
     @vis.when(mjc_Formal)
     def visit(self, node):
-        print("Formal!")
+        self.formalList += typeConvert(node.t.toString())
     @vis.when(mjc_FormalList)
     def visit(self, node):
-        print("FormalList!")
+        self.formalList = "("
+        for x in range (0, node.size()):
+            node.elementAt(x).accept(self)
+        self.formalList += ")"
     
     """ Statement visitor methods """
     @vis.when(mjc_CallStatement)

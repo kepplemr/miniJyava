@@ -242,6 +242,10 @@ def handleReturn(codeGen, mjc_Method):
             pushToStack(codeGen, codeGen.expType, codeGen.expIndex, None)
             # areturn
             codeGen.code.add(0xb0)
+        elif ret == "[I":
+            pushToStack(codeGen, EXP_ARRAYREF, codeGen.expIndex, None)
+            # areturn
+            codeGen.code.add(0xb0)
     else:
         # empty return opcode
         codeGen.code.add(0xb1)
@@ -279,10 +283,12 @@ def getMethodReference(codeGen, invokedObj):
     retType = typeConvert(method.getResult())
     if retType == "I":
         codeGen.expType = EXP_IMMINTVAL
+    elif retType == "[I":
+        codeGen.expType = EXP_OBJECT
     elif retType == "Ljava/lang/String;":
         codeGen.expType = EXP_IMMSTRREF
     elif retType == "[Ljava/lang/String;":
-        codeGen.expType = EXP_IMMSTRREF
+        codeGen.expType = EXP_OBJECT
     codeGen.expList += typeConvert(method.getResult())
     return codeGen.constantPool.getMethodInfo(className, typeConvert(methodName), codeGen.expList)
         
@@ -312,18 +318,10 @@ def getMethod(codeGen, mjc_Method, mjc_MethType):
     # Set method symbol marker
     codeGen.methodSym = Symbol.symbol(mjc_Method.i.toString())
     codeGen.code = ArrayList()
-    ######################################################
-    #
-    # TODO: move this to formallist
-    #
-    ######################################################
-    type = "("
-    for x in range (0, mjc_Method.fl.size()):
-        type += typeConvert(mjc_Method.fl.elementAt(x).t.toString())
-    type += ")"
-    type += typeConvert(mjc_Method.t.toString())
+    mjc_Method.fl.accept(codeGen)
+    codeGen.formalList += typeConvert(mjc_Method.t.toString())
     nameIndex = codeGen.constantPool.getUtf8(typeConvert(mjc_Method.i.toString()))
-    typeIndex = codeGen.constantPool.getUtf8(type)
+    typeIndex = codeGen.constantPool.getUtf8(codeGen.formalList)
     # locals = params + locals + possible return value
     maxLocals = mjc_Method.fl.size() + mjc_Method.vl.size() + 1
     # Handle method statements
