@@ -30,6 +30,7 @@ EXP_NEWARRAY = 9
 EXP_INTARRAY = 10
 EXP_STRARRAY = 11
 EXP_IDENTIFIER = 12
+EXP_ARRAYREF = 13
 
 
 """ Converts long toString() from ClassGen files to more sensical format """
@@ -71,7 +72,7 @@ def pushToStack(codeGen, type, value, arrayType):
         # iload <local>
         codeGen.code.add(0x15)
         codeGen.code.add(value)
-    elif type == EXP_LOCSTRIND or type == EXP_LOCOBJECT:
+    elif type == EXP_LOCSTRIND or type == EXP_LOCOBJECT or type == EXP_ARRAYREF:
         # aload <local>
         codeGen.code.add(0x19)
         codeGen.code.add(value)
@@ -83,6 +84,11 @@ def pushToStack(codeGen, type, value, arrayType):
         # aaload
         codeGen.code.add(0x32)
         codeGen.expType = EXP_IMMSTRREF
+        #codeGen.expType = EXP_IMMSTRREF
+        #codeGen.expType = EXP_LOCINTIND
+    elif type == EXP_IMMINTVAL or type == EXP_IMMSTRREF:
+        # already on stack, no need to push anything
+        pass
     elif type == EXP_NEWARRAY:
         if arrayType == "[I":
             # ldc <size>
@@ -100,10 +106,12 @@ def pushToStack(codeGen, type, value, arrayType):
             strInd = codeGen.constantPool.getClass("java/lang/String")
             codeGen.code.add(0x00)
             codeGen.code.add(strInd)
+    else:
+        print("Unexpected push index -> " + repr(type))
 
 """ Handles storing stuff to locals according to type """
 def popToLocal(codeGen, type, location):
-    if type == EXP_INTINDEX or type == EXP_LOCINTIND or type == EXP_IMMINTVAL:
+    if type == EXP_INTINDEX or type == EXP_LOCINTIND or type == EXP_IMMINTVAL or type == EXP_LOCSTRIND:
         # istore <location>
         codeGen.code.add(0x36)
         codeGen.code.add(location)
@@ -117,6 +125,8 @@ def popToLocal(codeGen, type, location):
     elif type == EXP_STRARRAY:
         # aastore
         codeGen.code.add(0x53)
+    else:
+        print("Unexpected pop index -> " + repr(type))
 
 """ Invokes virtual function in code """
 def invokeVirtual(codeGen, methRef):
@@ -217,7 +227,7 @@ def addInit(codeGen):
     init = MethodInfo(0, 3, 4, 7, codeGen.code.size() + 12, 512, 512, codeGen.code)
     codeGen.methodList.add(init)
     
-""" Handle the calculation/encoding of method return value """
+""" Handle the calculation/encoding of method return value in called method """
 def handleReturn(codeGen, mjc_Method):
     mjc_Method.e.accept(codeGen)
     ret = typeConvert(mjc_Method.t.toString())
@@ -226,22 +236,12 @@ def handleReturn(codeGen, mjc_Method):
             pushToStack(codeGen, codeGen.expType, codeGen.expIndex, None)
             # ireturn
             codeGen.code.add(0xac)
-        ####################################################
-        #
-        # TODO: fix me
-        #
-        ####################################################
-        elif "[Ljava/lang/String;":
-            classEntry = codeGen.symTab.getClass(codeGen.classSym)
-            methEntry = codeGen.symTab.getMethod(codeGen.classSym, codeGen.methodSym)
-            localName = typeConvert(mjc_Method.e.toString())
-            localId = mjc_Identifier(localName)
-            sym = Symbol.symbol(str(localId))
-            methFieldEntry = codeGen.symTab.getMethodLocal(codeGen.classSym, codeGen.methodSym, sym)
-            location = methFieldEntry.getLocation()
-            # aload <index>
-            codeGen.code.add(0x19)
-            codeGen.code.add(location)
+        elif ret == "[Ljava/lang/String;":
+            pushToStack(codeGen, EXP_ARRAYREF, codeGen.expIndex, None)
+            # areturn
+            codeGen.code.add(0xb0)
+        elif ret == "Ljava/lang/String;":
+            pushToStack(codeGen, codeGen.expType, codeGen.expIndex, None)
             # areturn
             codeGen.code.add(0xb0)
     else:
@@ -278,6 +278,13 @@ def getMethodReference(codeGen, invokedObj):
     className = typeConvert(methFieldEntry.toString())
     methodName = invokedObj.i.toString()
     method = codeGen.symTab.getMethod(Symbol.symbol(className), Symbol.symbol(methodName))
+    retType = typeConvert(method.getResult())
+    if retType == "I":
+        codeGen.expType = EXP_IMMINTVAL
+    elif retType == "Ljava/lang/String;":
+        codeGen.expType = EXP_IMMSTRREF
+    elif retType == "[Ljava/lang/String;":
+        codeGen.expType = EXP_IMMSTRREF
     codeGen.expList += typeConvert(method.getResult())
     return codeGen.constantPool.getMethodInfo(className, typeConvert(methodName), codeGen.expList)
         
@@ -331,15 +338,8 @@ def getMethod(codeGen, mjc_Method, mjc_MethType):
         method = MethodInfo(codeGen.ACCESS_PUBLIC, nameIndex, typeIndex, codeGen.CODE_INDEX, codeGen.code.size()+12, codeGen.MAX_STACK, maxLocals, codeGen.code)
     codeGen.methodList.add(method)
 def getCall(codeGen, call, location):
-    call.el.accept(codeGen)
     pushToStack(codeGen, EXP_LOCOBJECT, location, None)
     # Create method type based off ExpList arguments and push them on stack
     call.el.accept(codeGen);
     methRef = getMethodReference(codeGen, call) 
-    invokeVirtual(codeGen, methRef)       
-    #################################
-    #
-    # TODO: NO
-    #
-    #################################
-    codeGen.expType = EXP_IMMINTVAL  
+    invokeVirtual(codeGen, methRef)           

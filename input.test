@@ -14,14 +14,17 @@ class Test
             Test2 Y;
         endvars
         {
+            
             System.out.println("$$$ Testing println stuff: $$$");
             System.out.println("testing");
             System.out.println(42);
             System.out.println(true);
             System.out.println(false);
             System.out.println(null);
+            
         }
         {
+            
             System.out.println("$$$ Testing Operators: $$$");
             System.out.println(1+2);
             System.out.println(4-2);
@@ -33,8 +36,10 @@ class Test
             System.out.println(6 <= 7);
             System.out.println(4 == 3);
             System.out.println(4 != 3);
+            
         }
         {
+            
             System.out.println("$$$ Testing Assignment: $$$");
             testInt = 88;
             testString = "fail";
@@ -44,8 +49,10 @@ class Test
             System.out.println(testInt);
             System.out.println(locationZero);
             System.out.println(testString);
+            
         }
         {
+            
             System.out.println("$$$ Testing arrays: $$$");
             arr = new int[5];
             arr[1] = 7;
@@ -55,6 +62,7 @@ class Test
             testStrArr[1] = "seven";
             testStr = testStrArr[1];
             System.out.println(testStr);
+            
         }
         {
             System.out.println("$$$ Testing objects: $$$");
@@ -62,8 +70,15 @@ class Test
             Y = new Test2();
             testInt = Y.callMe(140, 42, 37);
             System.out.println(testInt);
-            testInt = Y.callMe2("testing");
-            System.out.println(testInt);
+            testStr = Y.callMe2("testing", "another");
+            System.out.println(testStr);
+            testStrArr = Y.callMe3();
+            System.out.println(testStrArr[0]);
+            System.out.println(testStrArr[1]);
+            System.out.println(testStrArr[2]);
+            System.out.println(testStrArr[3]);
+            System.out.println(testStrArr[4]);
+            
         }
         return 0;
     }
@@ -71,6 +86,7 @@ class Test
 
 class Test2
 {
+    // Test ability to call and return ints
     public int callMe(int i0, int i1, int i2)
     {
         beginvars
@@ -84,29 +100,43 @@ class Test2
         return i3;
     }
 
-    public int callMe2(String test)
+    // Test ability to call and return strings
+    public String callMe2(String test, String s2)
     {
         beginvars
             int i1;
         endvars
         System.out.println("CallMe2 Called!");
         System.out.println(test);
-        return 42;
+        test = "string return";
+        return test;
     }
 
-    public String[] callMe4() 
+    // Test ability to pass and return String[]'s
+    public String[] callMe3()
     {
         beginvars
             String[] strArr;
         endvars
+        System.out.println("CallMe3 Called!");
         strArr = new String[5];
+        strArr[0] = "1st element";
+        strArr[1] = "2nd element";
+        strArr[2] = "3rd element";
+        strArr[3] = "4th element";
+        strArr[4] = "5th element";
         return strArr;
     }
 
-    public boolean callMe5() 
+	// Test ability to pass and return int[]'s
+    public int[] callMe4() 
     {
         beginvars
+        	int[] iA;
         endvars
-        return true;
+        iA = new int[5];
+        iA[0] = 34;
+        iA[1] = 32;
+        return iA;
     }
 }

@@ -113,6 +113,8 @@ class CodeGenVisitor(VisitorAdaptor):
             self.expType = EXP_INTARRAY
         elif methFieldType == "[Ljava/lang/String;":
             self.expType = EXP_STRARRAY
+        else:
+            print("Cant find")
     @vis.when(mjc_NewArray)
     def visit(self, node):
         node.e.accept(self)
@@ -194,6 +196,9 @@ class CodeGenVisitor(VisitorAdaptor):
             printLocString(self)
         elif self.expType == EXP_BOOLVAL:
             printImmBoolVal(self)
+        # Str[]
+        elif self.expType == EXP_IMMSTRREF:
+            printCpStrIndex(self)
     @vis.when(mjc_Assign)
     def visit(self, node):
         location = getLocation(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
@@ -203,6 +208,7 @@ class CodeGenVisitor(VisitorAdaptor):
         popToLocal(self, self.expType, location)        
     @vis.when(mjc_ArrayAssign)
     def visit(self, node):
+        print("Arrayassign")
         location = getLocation(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
         methFieldType = getFieldType(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
         pushToStack(self, EXP_LOCOBJECT, location, None)
