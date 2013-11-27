@@ -72,7 +72,7 @@ class Test
             System.out.println(testInt);
             testStr = Y.callMe2("testing", "another");
             System.out.println(testStr);
-            testStrArr = Y.callMe3();
+            testStrArr = Y.callMe3(testStrArr);
             System.out.println(testStrArr[0]);
             System.out.println(testStrArr[1]);
             System.out.println(testStrArr[2]);
@@ -113,12 +113,13 @@ class Test2
     }
 
     // Test ability to pass and return String[]'s
-    public String[] callMe3()
+    public String[] callMe3(String[] test)
     {
         beginvars
             String[] strArr;
         endvars
         System.out.println("CallMe3 Called!");
+        System.out.println(test[1]);
         strArr = new String[5];
         strArr[0] = "1st element";
         strArr[1] = "2nd element";

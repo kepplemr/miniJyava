@@ -156,8 +156,15 @@ class CodeGenVisitor(VisitorAdaptor):
         self.expList = "("
         for x in range (0, node.size()):
             node.elementAt(x).accept(self)
+            if self.expType == EXP_STRARRAY:
+                self.expType = EXP_ARRAYREF
+                self.expList += "[Ljava/lang/String;"
+            elif self.expType == EXP_INTARRAY:
+                self.expType = EXP_ARRAYREF
+                self.expList += "[I"
+            else:
+                self.expList += typeConvert(node.elementAt(x).toString())                
             pushToStack(self, self.expType, self.expIndex, None)
-            self.expList += typeConvert(node.elementAt(x).toString())
         self.expList += ")"
     
     @vis.when(mjc_Formal)
@@ -208,7 +215,6 @@ class CodeGenVisitor(VisitorAdaptor):
         popToLocal(self, self.expType, location)        
     @vis.when(mjc_ArrayAssign)
     def visit(self, node):
-        print("Arrayassign")
         location = getLocation(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
         methFieldType = getFieldType(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
         pushToStack(self, EXP_LOCOBJECT, location, None)

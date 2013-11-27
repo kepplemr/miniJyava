@@ -84,8 +84,6 @@ def pushToStack(codeGen, type, value, arrayType):
         # aaload
         codeGen.code.add(0x32)
         codeGen.expType = EXP_IMMSTRREF
-        #codeGen.expType = EXP_IMMSTRREF
-        #codeGen.expType = EXP_LOCINTIND
     elif type == EXP_IMMINTVAL or type == EXP_IMMSTRREF:
         # already on stack, no need to push anything
         pass
