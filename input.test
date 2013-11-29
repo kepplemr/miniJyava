@@ -80,9 +80,17 @@ class Test
             System.out.println(testStrArr[4]);
             arr = Y.callMe4(arr);
             System.out.println(arr[1]);
-            
+            testInt = Y.callMe5(X);
         }
         return 0;
+    }
+
+    public int testMe()
+    {
+        beginvars
+        endvars
+        System.out.println("Called testMe!");
+        return 21;
     }
 }
 
@@ -131,7 +139,7 @@ class Test2
         return strArr;
     }
 
-	// Test ability to pass and return int[]'s
+    // Test ability to pass and return int[]'s
     public int[] callMe4(int[] test)
     {
         beginvars
@@ -145,10 +153,12 @@ class Test2
     }
     
     // Test ability to pass and return Objects
-    public int callMe5(int x)
+    public int callMe5(Test x)
     {
     	beginvars
     	endvars
-    	return false;
+        System.out.println("CallMe5 called!");
+        //x.testMe();
+    	return 42;
     }
 }

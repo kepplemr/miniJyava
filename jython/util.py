@@ -32,7 +32,6 @@ EXP_STRARRAY = 11
 EXP_IDENTIFIER = 12
 EXP_ARRAYREF = 13
 
-
 """ Converts long toString() from ClassGen files to more sensical format """
 def typeConvert(mjc_Type):
     if mjc_Type[:15] == "mjc_StringArray":
@@ -61,6 +60,13 @@ def typeConvert(mjc_Type):
         return typeConvert(type)
     else:
         return "V"
+    
+""" Returns true if object identifier, false otherwise """
+def isObject(arg):
+    if arg[:18] == "mjc_IdentifierType":
+        return True
+    else:
+        return False
     
 """ Handles putting stuff on stack according to type """
 def pushToStack(codeGen, type, value, arrayType):

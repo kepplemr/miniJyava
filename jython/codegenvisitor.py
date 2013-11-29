@@ -110,8 +110,10 @@ class CodeGenVisitor(VisitorAdaptor):
             self.expType = EXP_INTARRAY
         elif methFieldType == "[Ljava/lang/String;":
             self.expType = EXP_STRARRAY
+        # Object reference
         else:
-            print("Cant find")
+            print("can't find")
+            self.expType = EXP_LOCOBJECT
     @vis.when(mjc_NewArray)
     def visit(self, node):
         node.e.accept(self)
@@ -159,21 +161,12 @@ class CodeGenVisitor(VisitorAdaptor):
             elif self.expType == EXP_INTARRAY:
                 self.expType = EXP_ARRAYREF
                 self.expList += "[I"
+            elif self.expType == EXP_LOCOBJECT:
+                self.expList += ("L" + getFieldType(self, self.classSym, self.methodSym, node.elementAt(x).s) + ";")
             else:
                 self.expList += typeConvert(node.elementAt(x).toString())                
             pushToStack(self, self.expType, self.expIndex, None)
         self.expList += ")"
-    
-    """ Formal/FormalList visitor methods """
-    @vis.when(mjc_Formal)
-    def visit(self, node):
-        self.formalList += typeConvert(node.t.toString())
-    @vis.when(mjc_FormalList)
-    def visit(self, node):
-        self.formalList = "("
-        for x in range (0, node.size()):
-            node.elementAt(x).accept(self)
-        self.formalList += ")"
     
     """ Statement visitor methods """
     @vis.when(mjc_CallStatement)
@@ -224,6 +217,20 @@ class CodeGenVisitor(VisitorAdaptor):
         node.e2.accept(self)
         pushToStack(self, self.expType, self.expIndex, None)
         popToLocal(self, EXP_INTARRAY, None) if methFieldType == "[I" else popToLocal(self, EXP_STRARRAY, None)
+        
+    """ Formal/FormalList visitor methods """
+    @vis.when(mjc_Formal)
+    def visit(self, node):
+        if isObject(node.t.toString()):
+            self.formalList += ("L" + getFieldType(self, self.classSym, self.methodSym, node.i.s) + ";")
+        else:
+            self.formalList += typeConvert(node.t.toString())    
+    @vis.when(mjc_FormalList)
+    def visit(self, node):
+        self.formalList = "("
+        for x in range (0, node.size()):
+            node.elementAt(x).accept(self)
+        self.formalList += ")"
     
     """ Method visitor methods """
     @vis.when(mjc_MethodDeclSimple)

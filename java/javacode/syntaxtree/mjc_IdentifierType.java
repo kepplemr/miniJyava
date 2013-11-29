@@ -6,10 +6,10 @@ package javacode.syntaxtree;
 
 public class mjc_IdentifierType extends mjc_Type {
 
-  public String as;
+  public String t;
 
-  public mjc_IdentifierType (String as) {
-    this.as = as;
+  public mjc_IdentifierType (String t) {
+    this.t = t;
   }
 
   public void accept(Visitor visitor) {
@@ -31,7 +31,7 @@ public class mjc_IdentifierType extends mjc_Type {
     StringBuffer buffer = new StringBuffer();
     buffer.append(tab);
     buffer.append("mjc_IdentifierType(\n");
-    buffer.append("  "+tab+as);
+    buffer.append("  "+tab+t);
     buffer.append("\n");
     buffer.append(tab);
     buffer.append(") [mjc_IdentifierType]");
