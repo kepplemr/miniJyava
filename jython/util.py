@@ -31,6 +31,7 @@ EXP_INTARRAY = 10
 EXP_STRARRAY = 11
 EXP_IDENTIFIER = 12
 EXP_ARRAYREF = 13
+EXP_NEWOBJECT = 14
 
 """ Converts long toString() from ClassGen files to more sensical format """
 def typeConvert(mjc_Type):
@@ -67,6 +68,23 @@ def isObject(arg):
         return True
     else:
         return False
+    
+""" Return SymbolTable FieldEntry for identifier with precedence: fields ->
+    method parameters -> method locals """
+def getVariable(codeGen, classSym, methodSym, variable):
+    currSym = Symbol.symbol(variable.toString())
+    fieldEntry = None
+    fieldEntry = codeGen.symTab.getField(classSym, currSym)
+    if fieldEntry is not None:
+        return fieldEntry
+    fieldEntry = codeGen.symTab.getMethodParam(classSym, methodSym, currSym)
+    if fieldEntry is not None:
+        return fieldEntry
+    fieldEntry = codeGen.symTab.getMethodLocal(classSym, methodSym, currSym)
+    if fieldEntry is not None:
+        return fieldEntry
+    print("Error: could not find variable in Symbol Table")
+    
     
 """ Handles putting stuff on stack according to type """
 def pushToStack(codeGen, type, value, arrayType):
@@ -258,6 +276,7 @@ def handleReturn(codeGen, mjc_Method):
 
 """ Return type of field """
 def getFieldType(codeGen, classSym, methodSym, field):
+    #print(mjc_Identifier(field).toString())
     currSym = Symbol.symbol(mjc_Identifier(field).toString())
     try:
         methFieldEntry = codeGen.symTab.getMethodLocal(codeGen.classSym, codeGen.methodSym, currSym)
@@ -281,9 +300,14 @@ def getLocation(codeGen, classSym, methodSym, local):
 """ Create/return CP reference to methodRef entry """    
 def getMethodReference(codeGen, invokedObj):
     currSym = Symbol.symbol(mjc_Identifier(invokedObj.e.s).toString())
+    #print(currSym)
+    variable = getVariable(codeGen, codeGen.classSym, codeGen.methodSym, currSym)
+    
     methFieldEntry = codeGen.symTab.getMethodLocal(codeGen.classSym, codeGen.methodSym, currSym)
     # Discern class and method
-    className = typeConvert(methFieldEntry.toString())
+    #print(variable)
+    #print(methFieldEntry.toString())
+    className = typeConvert(variable.toString())
     methodName = invokedObj.i.toString()
     method = codeGen.symTab.getMethod(Symbol.symbol(className), Symbol.symbol(methodName))
     retType = typeConvert(method.getResult())

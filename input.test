@@ -156,9 +156,14 @@ class Test2
     public int callMe5(Test x)
     {
     	beginvars
+            int locInt;
+            Test newX;
     	endvars
         System.out.println("CallMe5 called!");
-        //x.testMe();
+        newX = new Test();
+        System.out.println(x);
+        newX.testMe();
+        x.testMe();
     	return 42;
     }
 }

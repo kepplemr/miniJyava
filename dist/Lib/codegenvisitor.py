@@ -200,6 +200,9 @@ class CodeGenVisitor(VisitorAdaptor):
         # Str[]
         elif self.expType == EXP_IMMSTRREF:
             printCpStrIndex(self)
+        # Object
+        elif self.expType == EXP_LOCOBJECT:
+            printLocInt(self)
     @vis.when(mjc_Assign)
     def visit(self, node):
         location = getLocation(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))

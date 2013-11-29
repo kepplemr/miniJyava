@@ -6,6 +6,11 @@ public class Test
         Test Y = new Test();
         int test = Test2.callMe(Y);
     }
+
+    public int testMe()
+    {
+        return 42;
+    }
 }
 
 class Test2
@@ -14,6 +19,7 @@ class Test2
 
     public static int callMe(Test x)
     {
+        x.testMe();
         return 4;
     }
 }

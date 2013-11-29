@@ -34,13 +34,29 @@ public class Table
 	}
 
 	public FieldEntry getField(Symbol classKey, Symbol fieldName)
+	throws IllegalArgumentException
 	{
-		return getClass(classKey).getField(fieldName);
+		try
+		{
+			return getClass(classKey).getField(fieldName);
+		}
+		catch (Exception ex)
+		{
+			throw new IllegalArgumentException();
+		}
 	}
 
 	public FieldEntry getMethodParam(Symbol classKey, Symbol methodName, Symbol paramName)
+	throws IllegalArgumentException
 	{
-		return getClass(classKey).getMethod(methodName).getParam(paramName);
+		try
+		{
+			return getClass(classKey).getMethod(methodName).getParam(paramName);
+		}
+		catch (Exception ex)
+		{
+			throw new IllegalArgumentException();
+		}
 	}
 
 	public FieldEntry getMethodLocal(Symbol classKey, Symbol methodName, Symbol localName)
