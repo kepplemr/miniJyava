@@ -80,7 +80,8 @@ class Test
             System.out.println(testStrArr[4]);
             arr = Y.callMe4(arr);
             System.out.println(arr[1]);
-            testInt = Y.callMe5(X);
+            X = Y.callMe5(X);
+            X.testMe();
         }
         return 0;
     }
@@ -153,7 +154,7 @@ class Test2
     }
     
     // Test ability to pass and return Objects
-    public int callMe5(Test x)
+    public Test callMe5(Test x)
     {
     	beginvars
             int locInt;
@@ -164,6 +165,6 @@ class Test2
         System.out.println(x);
         newX.testMe();
         x.testMe();
-    	return 42;
+    	return newX;
     }
 }

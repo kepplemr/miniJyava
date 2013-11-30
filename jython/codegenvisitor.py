@@ -101,7 +101,7 @@ class CodeGenVisitor(VisitorAdaptor):
     @vis.when(mjc_IdentifierExp)
     def visit(self, node):
         self.expIndex = getLocation(self, self.classSym, self.methodSym, node.s)
-        methFieldType = getFieldType(self, self.classSym, self.methodSym, node.s)
+        methFieldType = getType(self, self.classSym, self.methodSym, node.s)
         if methFieldType == "I":
             self.expType = EXP_LOCINTIND
         elif methFieldType == "Ljava/lang/String;":
@@ -112,7 +112,6 @@ class CodeGenVisitor(VisitorAdaptor):
             self.expType = EXP_STRARRAY
         # Object reference
         else:
-            print("can't find")
             self.expType = EXP_LOCOBJECT
     @vis.when(mjc_NewArray)
     def visit(self, node):
@@ -156,13 +155,13 @@ class CodeGenVisitor(VisitorAdaptor):
         for x in range (0, node.size()):
             node.elementAt(x).accept(self)
             if self.expType == EXP_STRARRAY:
-                self.expType = EXP_ARRAYREF
+                self.expType = EXP_LOCOBJECT
                 self.expList += "[Ljava/lang/String;"
             elif self.expType == EXP_INTARRAY:
-                self.expType = EXP_ARRAYREF
+                self.expType = EXP_LOCOBJECT
                 self.expList += "[I"
             elif self.expType == EXP_LOCOBJECT:
-                self.expList += ("L" + getFieldType(self, self.classSym, self.methodSym, node.elementAt(x).s) + ";")
+                self.expList += getObjType(self, self.classSym, self.methodSym, node.elementAt(x).s)
             else:
                 self.expList += typeConvert(node.elementAt(x).toString())                
             pushToStack(self, self.expType, self.expIndex, None)
@@ -173,6 +172,8 @@ class CodeGenVisitor(VisitorAdaptor):
     def visit(self, node):
         objLocation = getLocation(self, self.classSym, self.methodSym, node.e.s)
         getCall(self, node, objLocation)
+        # pop return, no one cares
+        self.code.add(0x57)
     @vis.when(mjc_Block)
     def visit(self, node):
         for x in range(0, node.sl.size()):
@@ -206,14 +207,14 @@ class CodeGenVisitor(VisitorAdaptor):
     @vis.when(mjc_Assign)
     def visit(self, node):
         location = getLocation(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
-        methFieldType = getFieldType(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
+        methFieldType = getType(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
         node.e.accept(self)
         pushToStack(self, self.expType, self.expIndex, methFieldType)
         popToLocal(self, self.expType, location)        
     @vis.when(mjc_ArrayAssign)
     def visit(self, node):
         location = getLocation(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
-        methFieldType = getFieldType(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
+        methFieldType = getType(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
         pushToStack(self, EXP_LOCOBJECT, location, None)
         node.e1.accept(self)
         pushToStack(self, self.expType, self.expIndex, None)
@@ -225,7 +226,7 @@ class CodeGenVisitor(VisitorAdaptor):
     @vis.when(mjc_Formal)
     def visit(self, node):
         if isObject(node.t.toString()):
-            self.formalList += ("L" + getFieldType(self, self.classSym, self.methodSym, node.i.s) + ";")
+            self.formalList += getObjType(self, self.classSym, self.methodSym, node.i.s)
         else:
             self.formalList += typeConvert(node.t.toString())    
     @vis.when(mjc_FormalList)
@@ -236,6 +237,15 @@ class CodeGenVisitor(VisitorAdaptor):
         self.formalList += ")"
     
     """ Method visitor methods """
+    @vis.when(mjc_MethodVoidType)
+    def visit(self, node):
+        self.formalList += "V"
+    @vis.when(mjc_MethodReturnType)
+    def visit(self, node):
+        if isObject(node.t.toString()):
+            self.formalList += ("L" + typeConvert(node.toString()) + ";")
+        else:
+            self.formalList += typeConvert(node.toString())
     @vis.when(mjc_MethodDeclSimple)
     def visit(self, node):
         getMethod(self, node, "simple")

@@ -30,11 +30,10 @@ EXP_NEWARRAY = 9
 EXP_INTARRAY = 10
 EXP_STRARRAY = 11
 EXP_IDENTIFIER = 12
-EXP_ARRAYREF = 13
-EXP_NEWOBJECT = 14
 
 """ Converts long toString() from ClassGen files to more sensical format """
 def typeConvert(mjc_Type):
+    mjc_Type = mjc_Type.strip()
     if mjc_Type[:15] == "mjc_StringArray":
         return "[Ljava/lang/String;"
     elif mjc_Type[:10] == "mjc_String":
@@ -48,15 +47,14 @@ def typeConvert(mjc_Type):
     elif mjc_Type[:18] == "mjc_IdentifierType":
         start = mjc_Type.index('(') + len('(')
         end = mjc_Type.index(')', start)
-        id = mjc_Type[start:end].strip()
-        return "" + id + ""
+        return mjc_Type[start:end].strip()
     elif mjc_Type[:14] == "mjc_Identifier":
         start = mjc_Type.index('(') + len('(')
         end = mjc_Type.index(')', start)
         return mjc_Type[start:end].strip()
     elif mjc_Type[:20] == "mjc_MethodReturnType":
         start = mjc_Type.index('(') + len('(')
-        end = mjc_Type.index('(', start)
+        end = mjc_Type.index(')', start)+1
         type = mjc_Type[start:end].strip()
         return typeConvert(type)
     else:
@@ -64,15 +62,15 @@ def typeConvert(mjc_Type):
     
 """ Returns true if object identifier, false otherwise """
 def isObject(arg):
-    if arg[:18] == "mjc_IdentifierType":
+    if arg[:18] == "mjc_IdentifierType" or arg[:14] == "mjc_Identifier":
         return True
     else:
         return False
     
-""" Return SymbolTable FieldEntry for identifier with precedence: fields ->
-    method parameters -> method locals """
+""" Functions for finding identifiers in the symbol table with precedence 
+    fields -> method parameters -> method locals and accessing their info. """
 def getVariable(codeGen, classSym, methodSym, variable):
-    currSym = Symbol.symbol(variable.toString())
+    currSym = Symbol.symbol(mjc_Identifier(variable).toString())
     fieldEntry = None
     fieldEntry = codeGen.symTab.getField(classSym, currSym)
     if fieldEntry is not None:
@@ -84,6 +82,15 @@ def getVariable(codeGen, classSym, methodSym, variable):
     if fieldEntry is not None:
         return fieldEntry
     print("Error: could not find variable in Symbol Table")
+def getType(codeGen, classSym, methodSym, variable):
+    fieldEntry = getVariable(codeGen, classSym, methodSym, variable)
+    return typeConvert(fieldEntry.getType().toString())
+def getObjType(codeGen, classSym, methodSym, variable):
+    fieldEntry = getVariable(codeGen, classSym, methodSym, variable)
+    return ("L" + typeConvert(fieldEntry.getType().toString()) + ";")
+def getLocation(codeGen, classSym, methodSym, variable):
+    fieldEntry = getVariable(codeGen, classSym, methodSym, variable)
+    return fieldEntry.getLocation()
     
     
 """ Handles putting stuff on stack according to type """
@@ -96,7 +103,7 @@ def pushToStack(codeGen, type, value, arrayType):
         # iload <local>
         codeGen.code.add(0x15)
         codeGen.code.add(value)
-    elif type == EXP_LOCSTRIND or type == EXP_LOCOBJECT or type == EXP_ARRAYREF:
+    elif type == EXP_LOCSTRIND or type == EXP_LOCOBJECT:
         # aload <local>
         codeGen.code.add(0x19)
         codeGen.code.add(value)
@@ -128,6 +135,8 @@ def pushToStack(codeGen, type, value, arrayType):
             strInd = codeGen.constantPool.getClass("java/lang/String")
             codeGen.code.add(0x00)
             codeGen.code.add(strInd)
+    elif type == EXP_OBJECT:
+        pass
     else:
         print("Unexpected push index -> " + repr(type))
 
@@ -137,7 +146,7 @@ def popToLocal(codeGen, type, location):
         # istore <location>
         codeGen.code.add(0x36)
         codeGen.code.add(location)
-    elif type == EXP_OBJECT or type == EXP_STRINDEX or type == EXP_IMMSTRREF or type == EXP_NEWARRAY:
+    elif type == EXP_OBJECT or type == EXP_STRINDEX or type == EXP_IMMSTRREF or type == EXP_NEWARRAY or type == EXP_LOCOBJECT:
         # astore <location>
         codeGen.code.add(0x3a)
         codeGen.code.add(location)
@@ -253,73 +262,52 @@ def addInit(codeGen):
 def handleReturn(codeGen, mjc_Method):
     mjc_Method.e.accept(codeGen)
     ret = typeConvert(mjc_Method.t.toString())
-    if ret != "V":
-        if ret == "I" or ret == "Z":
-            pushToStack(codeGen, codeGen.expType, codeGen.expIndex, None)
-            # ireturn
-            codeGen.code.add(0xac)
-        elif ret == "[Ljava/lang/String;":
-            pushToStack(codeGen, EXP_ARRAYREF, codeGen.expIndex, None)
-            # areturn
-            codeGen.code.add(0xb0)
-        elif ret == "Ljava/lang/String;":
-            pushToStack(codeGen, codeGen.expType, codeGen.expIndex, None)
-            # areturn
-            codeGen.code.add(0xb0)
-        elif ret == "[I":
-            pushToStack(codeGen, EXP_ARRAYREF, codeGen.expIndex, None)
-            # areturn
-            codeGen.code.add(0xb0)
-    else:
+    if ret == "V":
         # empty return opcode
         codeGen.code.add(0xb1)
-
-""" Return type of field """
-def getFieldType(codeGen, classSym, methodSym, field):
-    #print(mjc_Identifier(field).toString())
-    currSym = Symbol.symbol(mjc_Identifier(field).toString())
-    try:
-        methFieldEntry = codeGen.symTab.getMethodLocal(codeGen.classSym, codeGen.methodSym, currSym)
-        return typeConvert(methFieldEntry.getType().toString())
-    # Current Jython is buggy with specific Java exceptions; catch IllegalArgumentException here.
-    except:
-        methFieldEntry = codeGen.symTab.getMethodParam(codeGen.classSym, codeGen.methodSym, currSym)
-        return typeConvert(methFieldEntry.getType().toString())
-
-""" Returns relative location of local variable on method stack. """
-def getLocation(codeGen, classSym, methodSym, local):
-    currSym = Symbol.symbol(mjc_Identifier(local).toString())
-    # Current Jython is buggy with specific Java exceptions; catch IllegalArgumentException here.
-    try:
-        methFieldEntry = codeGen.symTab.getMethodLocal(codeGen.classSym, codeGen.methodSym, currSym)
-        return methFieldEntry.getLocation()
-    except:
-        methFieldEntry = codeGen.symTab.getMethodParam(codeGen.classSym, codeGen.methodSym, currSym)
-        return methFieldEntry.getLocation()                
+    elif ret == "I" or ret == "Z":
+        pushToStack(codeGen, codeGen.expType, codeGen.expIndex, None)
+        # ireturn
+        codeGen.code.add(0xac)
+    elif ret == "[Ljava/lang/String;" or ret == "[I":
+        pushToStack(codeGen, EXP_LOCOBJECT, codeGen.expIndex, None)
+        # areturn
+        codeGen.code.add(0xb0)
+    elif ret == "Ljava/lang/String;":
+        pushToStack(codeGen, codeGen.expType, codeGen.expIndex, None)
+        # areturn
+        codeGen.code.add(0xb0)
+    # Object
+    else:
+        pushToStack(codeGen, EXP_LOCOBJECT, codeGen.expIndex, None)
+        # areturn
+        codeGen.code.add(0xb0)
+               
 
 """ Create/return CP reference to methodRef entry """    
-def getMethodReference(codeGen, invokedObj):
-    currSym = Symbol.symbol(mjc_Identifier(invokedObj.e.s).toString())
-    #print(currSym)
-    variable = getVariable(codeGen, codeGen.classSym, codeGen.methodSym, currSym)
-    
-    methFieldEntry = codeGen.symTab.getMethodLocal(codeGen.classSym, codeGen.methodSym, currSym)
+def getMethodReference(codeGen, invokedObj): 
+    variable = getVariable(codeGen, codeGen.classSym, codeGen.methodSym, invokedObj.e.s)
     # Discern class and method
-    #print(variable)
-    #print(methFieldEntry.toString())
     className = typeConvert(variable.toString())
     methodName = invokedObj.i.toString()
     method = codeGen.symTab.getMethod(Symbol.symbol(className), Symbol.symbol(methodName))
     retType = typeConvert(method.getResult())
     if retType == "I":
-        codeGen.expType = EXP_IMMINTVAL
+        #codeGen.expType = EXP_IMMINTVAL
+        codeGen.expList += typeConvert(method.getResult())
     elif retType == "[I":
-        codeGen.expType = EXP_OBJECT
+        #codeGen.expType = EXP_OBJECT
+        codeGen.expList += typeConvert(method.getResult())
     elif retType == "Ljava/lang/String;":
-        codeGen.expType = EXP_IMMSTRREF
+        #codeGen.expType = EXP_IMMSTRREF
+        codeGen.expList += typeConvert(method.getResult())
     elif retType == "[Ljava/lang/String;":
-        codeGen.expType = EXP_OBJECT
-    codeGen.expList += typeConvert(method.getResult())
+        #codeGen.expType = EXP_OBJECT
+        codeGen.expList += typeConvert(method.getResult())
+    # Object return
+    else:
+        #codeGen.expType = EXP_OBJECT
+        codeGen.expList += ("L" + typeConvert(method.getResult()) + ";")
     return codeGen.constantPool.getMethodInfo(className, typeConvert(methodName), codeGen.expList)
         
 """ Macro class/method/call level functions """ 
@@ -349,7 +337,7 @@ def getMethod(codeGen, mjc_Method, mjc_MethType):
     codeGen.methodSym = Symbol.symbol(mjc_Method.i.toString())
     codeGen.code = ArrayList()
     mjc_Method.fl.accept(codeGen)
-    codeGen.formalList += typeConvert(mjc_Method.t.toString())
+    mjc_Method.t.accept(codeGen)
     nameIndex = codeGen.constantPool.getUtf8(typeConvert(mjc_Method.i.toString()))
     typeIndex = codeGen.constantPool.getUtf8(codeGen.formalList)
     # locals = params + locals + possible return value
