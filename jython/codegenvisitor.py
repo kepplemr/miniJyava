@@ -28,19 +28,22 @@ class CodeGenVisitor(VisitorAdaptor):
     expType = 0
     expIndex = 0
     
-    """ Generic method to initialize dynamic dispatcher """        
+    """ Required generic method to initialize dynamic dispatcher """        
     @vis.on('node')
     def visit(self, node):
         pass
 
+    """ Adds fieldRef to constant pool and class fieldList """
     @vis.when(mjc_VarDecl)
     def visit(self, node):
-        print("Encountered VarDecl")
-        nameIndex = self.constantPool.getUtf8(node.i.toString())
-        typeIndex = self.constantPool.getUtf8(node.t.toString())
+        name = typeConvert(node.i.toString())
+        type = typeConvert(node.t.toString())
+        nameIndex = self.constantPool.getUtf8(name)
+        typeIndex = self.constantPool.getUtf8(type)
+        self.constantPool.getFieldInfo(self.classSym.toString(), name, type)
         field = FieldInfo(self.ACCESS_PUBLIC, nameIndex, typeIndex)
         self.fieldList.add(field)
-       
+        
     """ EXP visitor methods """
     @vis.when(mjc_Add)
     def visit(self, node):

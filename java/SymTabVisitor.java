@@ -91,7 +91,8 @@ public class SymTabVisitor extends VisitorAdaptor
         {
             md.fl.elementAt(i).accept(this);
             // Local zero gets object reference
-        	fields.get(i).setLocation(i+1);
+            fields.get(i).setLocation(i+1);
+            location++;
         }
         ArrayList<FieldEntry> params = new ArrayList<FieldEntry>(fields);
         fields = new ArrayList<FieldEntry>();

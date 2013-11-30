@@ -293,20 +293,20 @@ def getMethodReference(codeGen, invokedObj):
     method = codeGen.symTab.getMethod(Symbol.symbol(className), Symbol.symbol(methodName))
     retType = typeConvert(method.getResult())
     if retType == "I":
-        #codeGen.expType = EXP_IMMINTVAL
+        codeGen.expType = EXP_IMMINTVAL
         codeGen.expList += typeConvert(method.getResult())
     elif retType == "[I":
-        #codeGen.expType = EXP_OBJECT
+        codeGen.expType = EXP_OBJECT
         codeGen.expList += typeConvert(method.getResult())
     elif retType == "Ljava/lang/String;":
-        #codeGen.expType = EXP_IMMSTRREF
+        codeGen.expType = EXP_IMMSTRREF
         codeGen.expList += typeConvert(method.getResult())
     elif retType == "[Ljava/lang/String;":
-        #codeGen.expType = EXP_OBJECT
+        codeGen.expType = EXP_OBJECT
         codeGen.expList += typeConvert(method.getResult())
     # Object return
     else:
-        #codeGen.expType = EXP_OBJECT
+        codeGen.expType = EXP_OBJECT
         codeGen.expList += ("L" + typeConvert(method.getResult()) + ";")
     return codeGen.constantPool.getMethodInfo(className, typeConvert(methodName), codeGen.expList)
         

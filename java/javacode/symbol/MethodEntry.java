@@ -66,7 +66,7 @@ public class MethodEntry extends Entry {
     public String toString()
     {
         String s = "";
-	if (staticMethod == true) s += "static ";
+        if (staticMethod == true) s += "static ";
         s += "\tName: " + name + "\n\t\tType: ";
         s += (result != null)? result : "void";
         s += "\n\t\tParams:\n";

@@ -14,13 +14,15 @@ public class ClassEntry extends Entry
     public Hashtable<Symbol, MethodEntry> getMethods() { return methods; }
     
     public ClassEntry(String n, String p, ArrayList<FieldEntry> f, 
-			  		  ArrayList<MethodEntry> m) {
+			  		  ArrayList<MethodEntry> m) 
+    {
 		name = n;
 		parent = p;
 		fields = new Hashtable<Symbol, FieldEntry>();
 		for (int i = 0; i < f.size(); i++)
 		{
 			fields.put(Symbol.symbol(f.get(i).name), f.get(i));
+			
 		}
 		methods = new Hashtable<Symbol, MethodEntry>();
 		for (int i = 0; i < m.size(); i++)
