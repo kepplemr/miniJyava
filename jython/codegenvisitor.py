@@ -161,6 +161,7 @@ class CodeGenVisitor(VisitorAdaptor):
             elif self.expType == EXP_LOCOBJECT:
                 self.expList += getObjType(self, self.classSym, self.methodSym, node.elementAt(x).s)
             else:
+                print(node.elementAt(x).toString())
                 self.expList += typeConvert(node.elementAt(x).toString())                
             pushToStack(self, self.expType, self.expIndex, None)
         self.expList += ")"

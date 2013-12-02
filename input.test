@@ -82,6 +82,7 @@ class Test
             arr = Y.callMe4(arr);
             System.out.println(arr[1]);
             X = Y.callMe5(X);
+            Y.callMe7(true, false);
             X.testMe();
             Z = new Test3();
             Z.callMe6();
@@ -155,6 +156,21 @@ class Test2
         iA[0] = 34;
         iA[1] = 32;
         return iA;
+    }
+    
+    // Test ability to pass and return bools
+    public boolean callMe7(boolean b1, boolean b2)
+    {
+    	beginvars
+    		boolean bool1;
+    		boolean bool2;
+    	endvars
+    	bool1 = true;
+    	bool2 = false;
+    	System.out.println("Callme7 Called!");
+    	System.out.println(bool1);
+    	System.out.println(bool2);
+    	return true;
     }
     
     // Test ability to pass and return Objects

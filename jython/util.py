@@ -46,7 +46,8 @@ def typeConvert(mjc_Type):
         return "[I"
     elif mjc_Type[:11] == "mjc_Integer":
         return "I"
-    elif mjc_Type[:15] == "mjc_BooleanType":
+    elif (mjc_Type[:15] == "mjc_BooleanType" or mjc_Type[:8] == "mjc_True" or
+          mjc_Type[:9] == "mjc_False"):
         return "Z"
     elif mjc_Type[:18] == "mjc_IdentifierType":
         start = mjc_Type.index('(') + len('(')
@@ -358,6 +359,9 @@ def getMethodReference(codeGen, invokedObj):
         codeGen.expList += typeConvert(method.getResult())
     elif retType == "[Ljava/lang/String;":
         codeGen.expType = EXP_OBJECT
+        codeGen.expList += typeConvert(method.getResult())
+    elif retType == "Z":
+        codeGen.expType = EXP_BOOLVAL
         codeGen.expList += typeConvert(method.getResult())
     # Object return
     else:
