@@ -35,6 +35,9 @@ EXP_FIELD_INT = 13
 EXP_FIELD_STRING = 14
 EXP_FIELD_OBJECT = 15
 
+EXP_IMMBOOL = 16
+EXP_LOCBOOL = 17
+
 """ Converts long toString() from ClassGen files to more sensical format """
 def typeConvert(mjc_Type):
     mjc_Type = mjc_Type.strip()
@@ -79,17 +82,15 @@ def setType(codeGen, typeString):
     elif typeString == "I":
         codeGen.expType = EXP_LOCINTIND
     elif typeString == "Ljava/lang/String;":
-        #print("String type")
         codeGen.expType = EXP_LOCSTRIND
     elif typeString == "[I":
         codeGen.expType = EXP_INTARRAY
-        #codeGen.expType = EXP_NEWARRAY
     elif typeString == "[Ljava/lang/String;":
         codeGen.expType = EXP_STRARRAY
-        #codeGen.expType = EXP_NEWARRAY
+    elif typeString == "Z":
+        codeGen.expType = EXP_LOCBOOL
     # Object reference
     else:
-        #print("Object type")
         codeGen.expType = EXP_LOCOBJECT
 
     
@@ -123,16 +124,6 @@ def getLocation(codeGen, classSym, methodSym, variable):
         cpIndex = codeGen.constantPool.getFieldInfo(classSym.toString(), variable, type)
         return cpIndex
     return fieldEntry.getLocation()
-"""
-def getFieldType(codeGen, classSym, methodSym, variable):
-    type = getType(codeGen, classSym, methodSym, variable)
-    if type == "I" or type == "[I":
-        return EXP_INTINDEX
-    elif type == "[Ljava/lang/String;" or type == "Ljava/lang/String;":
-        return EXP_STRINDEX
-    else:
-        return EXP_OBJECT 
-"""
 def isObject(arg):
     if arg[:18] == "mjc_IdentifierType" or arg[:14] == "mjc_Identifier":
         return True
@@ -151,6 +142,10 @@ def pushToStack(codeGen, type, value, arrayType):
         # getfield <cpIndexToFieldRef>
         codeGen.code.add(0xb4)
         codeGen.code.add(0x00)
+        codeGen.code.add(value)
+    elif type == EXP_LOCBOOL:
+        # iload <local bool>
+        codeGen.code.add(0x15)
         codeGen.code.add(value)
     elif type == EXP_INTINDEX or type == EXP_STRINDEX:
         # ldc <cpIntIndex>
@@ -172,7 +167,7 @@ def pushToStack(codeGen, type, value, arrayType):
         # aaload
         codeGen.code.add(0x32)
         codeGen.expType = EXP_IMMSTRREF
-    elif type == EXP_IMMINTVAL or type == EXP_IMMSTRREF:
+    elif type == EXP_IMMINTVAL or type == EXP_IMMSTRREF or type == EXP_IMMBOOL:
         # already on stack, no need to push anything
         pass
     elif type == EXP_NEWARRAY:
@@ -196,6 +191,7 @@ def pushToStack(codeGen, type, value, arrayType):
         pass
     else:
         print("Unexpected push index -> " + repr(type))
+        
 
 """ Handles storing stuff to locals according to type """
 def popToLocal(codeGen, type, location):
@@ -205,7 +201,8 @@ def popToLocal(codeGen, type, location):
         codeGen.code.add(0xb5)
         codeGen.code.add(0x00)
         codeGen.code.add(location)
-    elif type == EXP_INTINDEX or type == EXP_LOCINTIND or type == EXP_IMMINTVAL:
+    elif (type == EXP_INTINDEX or type == EXP_LOCINTIND or type == EXP_IMMINTVAL or
+          type == EXP_LOCBOOL):
         # istore <location>
         codeGen.code.add(0x36)
         codeGen.code.add(location)
@@ -286,7 +283,7 @@ def comparisonExpression(codeGen, mjc_Exp, mjc_OpType):
     # bipush 1
     codeGen.code.add(0x10)
     codeGen.code.add(0x01)
-    codeGen.expType = EXP_BOOLVAL
+    codeGen.expType = EXP_IMMBOOL
         
 """ Adds default <init> constructor """
 def addInit(codeGen):
@@ -361,7 +358,7 @@ def getMethodReference(codeGen, invokedObj):
         codeGen.expType = EXP_OBJECT
         codeGen.expList += typeConvert(method.getResult())
     elif retType == "Z":
-        codeGen.expType = EXP_BOOLVAL
+        codeGen.expType = EXP_IMMBOOL
         codeGen.expList += typeConvert(method.getResult())
     # Object return
     else:

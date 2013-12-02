@@ -85,16 +85,14 @@ class CodeGenVisitor(VisitorAdaptor):
         self.expIndex = self.constantPool.getString(node.s)
     @vis.when(mjc_True)
     def visit(self, node):
-        self.expType = EXP_BOOLVAL
-        self.expIndex = 0
-        # bipush 1
+        self.expType = EXP_IMMBOOL
+        self.expIndex = 1
         self.code.add(0x10)
         self.code.add(0x01)
     @vis.when(mjc_False)
     def visit(self, node):
-        self.expType = EXP_BOOLVAL
+        self.expType = EXP_IMMBOOL
         self.expIndex = 0
-        #bipush 0
         self.code.add(0x10)
         self.code.add(0x00)
     @vis.when(mjc_Null)
@@ -161,7 +159,6 @@ class CodeGenVisitor(VisitorAdaptor):
             elif self.expType == EXP_LOCOBJECT:
                 self.expList += getObjType(self, self.classSym, self.methodSym, node.elementAt(x).s)
             else:
-                print(node.elementAt(x).toString())
                 self.expList += typeConvert(node.elementAt(x).toString())                
             pushToStack(self, self.expType, self.expIndex, None)
         self.expList += ")"
@@ -192,7 +189,9 @@ class CodeGenVisitor(VisitorAdaptor):
         elif (self.expType == EXP_INTINDEX or self.expType == EXP_LOCINTIND 
             or self.expType == EXP_LOCOBJECT):
             printPush(self, 0x13)
-        elif self.expType == EXP_BOOLVAL:
+        elif self.expType == EXP_LOCBOOL or self.expType == EXP_BOOLVAL:
+            printPush(self, 0x16)
+        elif self.expType == EXP_IMMBOOL:
             printImm(self, 0x16)
         elif self.expType == EXP_IMMINTVAL:
             printImm(self, 0x13)
@@ -207,7 +206,8 @@ class CodeGenVisitor(VisitorAdaptor):
         node.e.accept(self)
         pushToStack(self, self.expType, self.expIndex, typeString)
         location = getLocation(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
-        if typeString[:3] == "<f>":
+        # if != NEWARRAY?
+        if typeString[:3] == "<f>" or typeString == "Z":
             node.i.accept(self)
         popToLocal(self, self.expType, location)        
     @vis.when(mjc_ArrayAssign)

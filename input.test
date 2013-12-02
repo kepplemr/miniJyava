@@ -13,6 +13,7 @@ class Test
             Test X;
             Test2 Y;
             Test3 Z;
+            boolean testBool;
         endvars
         {
             
@@ -82,7 +83,8 @@ class Test
             arr = Y.callMe4(arr);
             System.out.println(arr[1]);
             X = Y.callMe5(X);
-            Y.callMe7(true, false);
+            testBool = Y.callMe7(true, false);
+            System.out.println(testBool);
             X.testMe();
             Z = new Test3();
             Z.callMe6();
@@ -170,7 +172,9 @@ class Test2
     	System.out.println("Callme7 Called!");
     	System.out.println(bool1);
     	System.out.println(bool2);
-    	return true;
+    	System.out.println(b1);
+    	System.out.println(b2);
+    	return false;
     }
     
     // Test ability to pass and return Objects
