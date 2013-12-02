@@ -84,6 +84,7 @@ class Test
             X = Y.callMe5(X);
             X.testMe();
             Z = new Test3();
+            Z.callMe6();
         }
         return 0;
     }

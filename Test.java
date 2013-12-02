@@ -1,25 +1,14 @@
 public class Test
 {
+    public int test;
+
     public static void main(String [] args)
     {
-        Test2 X = new Test2();
-        Test Y = new Test();
-        int test = Test2.callMe(Y);
+        new Test();
     }
 
-    public int testMe()
+    public Test()
     {
-        return 42;
-    }
-}
-
-class Test2
-{
-    public Test2() {}
-
-    public static int callMe(Test x)
-    {
-        x.testMe();
-        return 4;
+        test = 42;
     }
 }

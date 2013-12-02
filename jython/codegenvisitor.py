@@ -100,22 +100,17 @@ class CodeGenVisitor(VisitorAdaptor):
     @vis.when(mjc_Null)
     def visit(self, node):
         self.expType = EXP_STRINDEX
-        self.expIndex = self.constantPool.getString("null") 
+        self.expIndex = self.constantPool.getString("null")
+    @vis.when(mjc_Identifier)
+    def visit(self, node):
+        self.expIndex = getLocation(self, self.classSym, self.methodSym, node.s)
+        idType = getType(self, self.classSym, self.methodSym, node.s)
+        setType(self, idType)        
     @vis.when(mjc_IdentifierExp)
     def visit(self, node):
         self.expIndex = getLocation(self, self.classSym, self.methodSym, node.s)
-        methFieldType = getType(self, self.classSym, self.methodSym, node.s)
-        if methFieldType == "I":
-            self.expType = EXP_LOCINTIND
-        elif methFieldType == "Ljava/lang/String;":
-            self.expType = EXP_LOCSTRIND
-        elif methFieldType == "[I":
-            self.expType = EXP_INTARRAY
-        elif methFieldType == "[Ljava/lang/String;":
-            self.expType = EXP_STRARRAY
-        # Object reference
-        else:
-            self.expType = EXP_LOCOBJECT
+        idType = getType(self, self.classSym, self.methodSym, node.s)
+        setType(self, idType)
     @vis.when(mjc_NewArray)
     def visit(self, node):
         node.e.accept(self)
@@ -189,30 +184,30 @@ class CodeGenVisitor(VisitorAdaptor):
         self.code.add(0x0d)
         # handle EXP to print
         node.e.accept(self)
-        if self.expType == EXP_INTINDEX:
-            printCpIntIndex(self)
-        elif self.expType == EXP_STRINDEX:
-            printCpStrIndex(self)
-        elif self.expType == EXP_IMMINTVAL:
-            printImmIntVal(self)
-        elif self.expType == EXP_LOCINTIND:
-            printLocInt(self)
-        elif self.expType == EXP_LOCSTRIND:
-            printLocString(self)
+        if self.expType == EXP_FIELD_INT or self.expType == EXP_FIELD_OBJECT:
+            printPush(self, 0x13)
+        elif self.expType == EXP_FIELD_STRING:
+            printPush(self, 0x19)
+        elif (self.expType == EXP_INTINDEX or self.expType == EXP_LOCINTIND 
+            or self.expType == EXP_LOCOBJECT):
+            printPush(self, 0x13)
         elif self.expType == EXP_BOOLVAL:
-            printImmBoolVal(self)
-        # Str[]
-        elif self.expType == EXP_IMMSTRREF:
-            printCpStrIndex(self)
-        # Object
-        elif self.expType == EXP_LOCOBJECT:
-            printLocInt(self)
+            printImm(self, 0x16)
+        elif self.expType == EXP_IMMINTVAL:
+            printImm(self, 0x13)
+        elif (self.expType == EXP_STRINDEX or self.expType == EXP_LOCSTRIND
+              or self.expType == EXP_IMMSTRREF):
+            printPush(self, 0x19)
     @vis.when(mjc_Assign)
     def visit(self, node):
-        location = getLocation(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
-        methFieldType = getType(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
+        typeString = getType(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
+        if typeString[:3] == "<f>":
+            loadInstance(self)
         node.e.accept(self)
-        pushToStack(self, self.expType, self.expIndex, methFieldType)
+        pushToStack(self, self.expType, self.expIndex, typeString)
+        location = getLocation(self, self.classSym, self.methodSym, typeConvert(node.i.toString()))
+        if typeString[:3] == "<f>":
+            node.i.accept(self)
         popToLocal(self, self.expType, location)        
     @vis.when(mjc_ArrayAssign)
     def visit(self, node):

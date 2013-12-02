@@ -46,7 +46,10 @@ public class SymTabVisitor extends VisitorAdaptor
         methods = new ArrayList<MethodEntry>();
         // Handle class fields
         for (int i = 0; i < c.vl.size(); i++)
+        {
             c.vl.elementAt(i).accept(this);
+            fields.get(i).setLocation(-1);
+        }
         ArrayList<FieldEntry> classFields = new ArrayList<FieldEntry>(fields);
         // Handle class methods
         for (int i = 0; i < c.ml.size(); i++)
@@ -67,7 +70,10 @@ public class SymTabVisitor extends VisitorAdaptor
         methods = new ArrayList<MethodEntry>();
         // Handle class fields
         for (int i = 0; i < c.vl.size(); i++)
+        {
             c.vl.elementAt(i).accept(this);
+            fields.get(i).setLocation(-1);
+        }
         ArrayList<FieldEntry> classFields = new ArrayList<FieldEntry>(fields);
         // Handle class methods
         for (int i = 0; i < c.ml.size(); i++)

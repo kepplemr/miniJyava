@@ -31,6 +31,10 @@ EXP_INTARRAY = 10
 EXP_STRARRAY = 11
 EXP_IDENTIFIER = 12
 
+EXP_FIELD_INT = 13
+EXP_FIELD_STRING = 14
+EXP_FIELD_OBJECT = 15
+
 """ Converts long toString() from ClassGen files to more sensical format """
 def typeConvert(mjc_Type):
     mjc_Type = mjc_Type.strip()
@@ -60,12 +64,33 @@ def typeConvert(mjc_Type):
     else:
         return "V"
     
-""" Returns true if object identifier, false otherwise """
-def isObject(arg):
-    if arg[:18] == "mjc_IdentifierType" or arg[:14] == "mjc_Identifier":
-        return True
+""" Converts string representation of type to constant value """
+def setType(codeGen, typeString):
+    # class field
+    if typeString[:3] == "<f>":
+        type = typeString[3:]
+        if type == "I" or type == "[I":
+            codeGen.expType = EXP_FIELD_INT
+        elif type == "[Ljava/lang/String;" or type == "Ljava/lang/String;":
+            codeGen.expType = EXP_FIELD_STRING
+        else:
+            codeGen.expType = EXP_FIELD_OBJECT
+    elif typeString == "I":
+        codeGen.expType = EXP_LOCINTIND
+    elif typeString == "Ljava/lang/String;":
+        #print("String type")
+        codeGen.expType = EXP_LOCSTRIND
+    elif typeString == "[I":
+        codeGen.expType = EXP_INTARRAY
+        #codeGen.expType = EXP_NEWARRAY
+    elif typeString == "[Ljava/lang/String;":
+        codeGen.expType = EXP_STRARRAY
+        #codeGen.expType = EXP_NEWARRAY
+    # Object reference
     else:
-        return False
+        #print("Object type")
+        codeGen.expType = EXP_LOCOBJECT
+
     
 """ Functions for finding identifiers in the symbol table with precedence 
     fields -> method parameters -> method locals and accessing their info. """
@@ -84,18 +109,49 @@ def getVariable(codeGen, classSym, methodSym, variable):
     print("Error: could not find variable in Symbol Table")
 def getType(codeGen, classSym, methodSym, variable):
     fieldEntry = getVariable(codeGen, classSym, methodSym, variable)
+    if isField(fieldEntry):
+        return ("<f>" + typeConvert(fieldEntry.getType().toString()))
     return typeConvert(fieldEntry.getType().toString())
 def getObjType(codeGen, classSym, methodSym, variable):
     fieldEntry = getVariable(codeGen, classSym, methodSym, variable)
     return ("L" + typeConvert(fieldEntry.getType().toString()) + ";")
 def getLocation(codeGen, classSym, methodSym, variable):
     fieldEntry = getVariable(codeGen, classSym, methodSym, variable)
+    if isField(fieldEntry):
+        type = typeConvert(fieldEntry.getType().toString())
+        cpIndex = codeGen.constantPool.getFieldInfo(classSym.toString(), variable, type)
+        return cpIndex
     return fieldEntry.getLocation()
+"""
+def getFieldType(codeGen, classSym, methodSym, variable):
+    type = getType(codeGen, classSym, methodSym, variable)
+    if type == "I" or type == "[I":
+        return EXP_INTINDEX
+    elif type == "[Ljava/lang/String;" or type == "Ljava/lang/String;":
+        return EXP_STRINDEX
+    else:
+        return EXP_OBJECT 
+"""
+def isObject(arg):
+    if arg[:18] == "mjc_IdentifierType" or arg[:14] == "mjc_Identifier":
+        return True
+    else:
+        return False
+def isField(arg):
+    isField = True if arg.getLocation() == -1 else False
+    return isField
     
     
 """ Handles putting stuff on stack according to type """
 def pushToStack(codeGen, type, value, arrayType):
-    if type == EXP_INTINDEX or type == EXP_STRINDEX:
+    if (type == EXP_FIELD_INT or type == EXP_FIELD_STRING or 
+        type == EXP_FIELD_OBJECT):
+        loadInstance(codeGen)
+        # getfield <cpIndexToFieldRef>
+        codeGen.code.add(0xb4)
+        codeGen.code.add(0x00)
+        codeGen.code.add(value)
+    elif type == EXP_INTINDEX or type == EXP_STRINDEX:
         # ldc <cpIntIndex>
         codeGen.code.add(0x12)
         codeGen.code.add(value)
@@ -142,11 +198,18 @@ def pushToStack(codeGen, type, value, arrayType):
 
 """ Handles storing stuff to locals according to type """
 def popToLocal(codeGen, type, location):
-    if type == EXP_INTINDEX or type == EXP_LOCINTIND or type == EXP_IMMINTVAL or type == EXP_LOCSTRIND:
+    if (type == EXP_FIELD_INT or type == EXP_FIELD_STRING or 
+        type == EXP_FIELD_OBJECT):        
+        # putfield <cpIndexToFieldRef>
+        codeGen.code.add(0xb5)
+        codeGen.code.add(0x00)
+        codeGen.code.add(location)
+    elif type == EXP_INTINDEX or type == EXP_LOCINTIND or type == EXP_IMMINTVAL:
         # istore <location>
         codeGen.code.add(0x36)
         codeGen.code.add(location)
-    elif type == EXP_OBJECT or type == EXP_STRINDEX or type == EXP_IMMSTRREF or type == EXP_NEWARRAY or type == EXP_LOCOBJECT:
+    elif (type == EXP_OBJECT or type == EXP_STRINDEX or type == EXP_IMMSTRREF or 
+          type == EXP_NEWARRAY or type == EXP_LOCOBJECT or type == EXP_LOCSTRIND):
         # astore <location>
         codeGen.code.add(0x3a)
         codeGen.code.add(location)
@@ -166,23 +229,12 @@ def invokeVirtual(codeGen, methRef):
     codeGen.code.add(0x00)
     codeGen.code.add(methRef)
 
-""" Print functions for various types """
-def printCpIntIndex(codeGen):
+""" Print functions """
+def printPush(codeGen, virtual):
     pushToStack(codeGen, codeGen.expType, codeGen.expIndex, None)
-    invokeVirtual(codeGen, 0x13)
-def printCpStrIndex(codeGen):
-    pushToStack(codeGen, codeGen.expType, codeGen.expIndex, None)
-    invokeVirtual(codeGen, 0x19)
-def printLocInt(codeGen):
-    pushToStack(codeGen, codeGen.expType, codeGen.expIndex, None)
-    invokeVirtual(codeGen, 0x13)
-def printLocString(codeGen):
-    pushToStack(codeGen, codeGen.expType, codeGen.expIndex, None)
-    invokeVirtual(codeGen, 0x19)
-def printImmIntVal(codeGen):
-    invokeVirtual(codeGen, 0x13)
-def printImmBoolVal(codeGen):
-    invokeVirtual(codeGen, 0x16)
+    invokeVirtual(codeGen, virtual)
+def printImm(codeGen, virtual):
+    invokeVirtual(codeGen, virtual)
 
 """ Expression evaluation functions """
 def arithmeticExpression(codeGen, mjc_Exp, mjc_OpType):
@@ -238,8 +290,7 @@ def comparisonExpression(codeGen, mjc_Exp, mjc_OpType):
 """ Adds default <init> constructor """
 def addInit(codeGen):
     codeGen.code = ArrayList()
-    # aload_0
-    codeGen.code.add(0x2a)
+    loadInstance(codeGen)
     # invokespecial #1
     codeGen.code.add(0xb7)
     codeGen.code.add(0x00)
@@ -257,6 +308,10 @@ def addInit(codeGen):
     codeGen.code.add(0xb1)
     init = MethodInfo(0, 3, 4, 7, codeGen.code.size() + 12, 512, 512, codeGen.code)
     codeGen.methodList.add(init)
+    
+""" Puts current object reference on stack """
+def loadInstance(codeGen):
+    codeGen.code.add(0x2a)
     
 """ Handle the calculation/encoding of method return value in called method """
 def handleReturn(codeGen, mjc_Method):
