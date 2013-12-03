@@ -45,6 +45,7 @@ class Test
     	this.testAssignment();
     	this.testArrays();
     	this.testObjects();
+    	this.testIfs();
     	return;
     }
  
@@ -192,6 +193,24 @@ class Test
     	Y = testPass.objPass(X);
     	methString = Y.getFieldStr();
     	System.out.println(methString);
+    	return;
+    }
+    
+    public void testIfs()
+    {
+    	beginvars
+    	endvars
+    	System.out.println("$$$ Testing Ifs: $$$");
+    	if (4 > 5)
+    	{
+    		System.out.println("If Exp was evaluated true");
+    		System.out.println("4 is greater than 5?");
+    	}
+    	else
+    	{
+    		System.out.println("If Exp was evaluated false");
+    		System.out.println("4 is not greater than 5");
+    	}
     	return;
     }
 }

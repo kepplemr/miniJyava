@@ -178,7 +178,28 @@ class CodeGenVisitor(VisitorAdaptor):
             pushToStack(self, self.expType, self.expIndex, None)
         self.expList += ")"
     
+    
+    
     """ Statement visitor methods """
+    @vis.when(mjc_If)
+    def visit(self, node):
+        node.e.accept(self)
+        codeCopy = ArrayList(self.code)
+        self.code.clear()
+        node.s1.accept(self)
+        # ifeq <branch past true statements>
+        codeCopy.add(0x99)
+        codeCopy.add(0x00)
+        codeCopy.add(self.code.size()+6)
+        codeCopy.addAll(self.code)
+        self.code.clear()
+        node.s2.accept(self)
+        # goto -> after else
+        codeCopy.add(0xa7)
+        codeCopy.add(0x00)
+        codeCopy.add(self.code.size()+3)
+        codeCopy.addAll(self.code)
+        self.code = ArrayList(codeCopy)
     @vis.when(mjc_CallStatement)
     def visit(self, node):
         objLocation = getLocation(self, self.classSym, self.methodSym, typeConvert(node.e.toString()))
