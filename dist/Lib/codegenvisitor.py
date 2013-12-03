@@ -99,6 +99,10 @@ class CodeGenVisitor(VisitorAdaptor):
     def visit(self, node):
         self.expType = EXP_STRINDEX
         self.expIndex = self.constantPool.getString("null")
+    @vis.when(mjc_This)
+    def visit(self, node):
+        self.expType = EXP_STRINDEX
+        self.expIndex = self.constantPool.getString(self.classSym.toString())
     @vis.when(mjc_Identifier)
     def visit(self, node):
         self.expIndex = getLocation(self, self.classSym, self.methodSym, node.s)
@@ -166,10 +170,8 @@ class CodeGenVisitor(VisitorAdaptor):
     """ Statement visitor methods """
     @vis.when(mjc_CallStatement)
     def visit(self, node):
-        objLocation = getLocation(self, self.classSym, self.methodSym, node.e.s)
+        objLocation = getLocation(self, self.classSym, self.methodSym, typeConvert(node.e.toString()))
         getCall(self, node, objLocation)
-        # pop return, no one cares
-        self.code.add(0x57)
     @vis.when(mjc_Block)
     def visit(self, node):
         for x in range(0, node.sl.size()):
@@ -189,7 +191,8 @@ class CodeGenVisitor(VisitorAdaptor):
         elif (self.expType == EXP_INTINDEX or self.expType == EXP_LOCINTIND 
             or self.expType == EXP_LOCOBJECT):
             printPush(self, 0x13)
-        elif self.expType == EXP_LOCBOOL or self.expType == EXP_BOOLVAL:
+        elif (self.expType == EXP_LOCBOOL or self.expType == EXP_BOOLVAL or
+              self.expType == EXP_FIELD_BOOL):
             printPush(self, 0x16)
         elif self.expType == EXP_IMMBOOL:
             printImm(self, 0x16)
@@ -267,6 +270,6 @@ class CodeGenVisitor(VisitorAdaptor):
         for x in range(0, node.size()):
             self.constantPool.clearConstantPool()
             self.constantPool.createPrintLineEntries()
-            self.constantPool.getString("--- Inside Class Constructor " + repr(x) + " ---")
+            self.constantPool.getString("--- Inside Class Constr: " + repr(x) + " ---")
             node.elementAt(x).accept(self)
         self.codeGener.writeFiles()

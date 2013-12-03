@@ -1,5 +1,8 @@
 class Test
 {
+	String fieldStr;
+	int fieldInt;
+	boolean fieldBool;
     public static void main(String[] args)
     {
         beginvars
@@ -11,48 +14,14 @@ class Test
             String[] testStrArr;
             String testStr;
             Test X;
+            Test main;
             Test2 Y;
             Test3 Z;
             boolean testBool;
         endvars
-        {
-            
-            System.out.println("$$$ Testing println stuff: $$$");
-            System.out.println("testing");
-            System.out.println(42);
-            System.out.println(true);
-            System.out.println(false);
-            System.out.println(null);
-            
-        }
-        {
-            
-            System.out.println("$$$ Testing Operators: $$$");
-            System.out.println(1+2);
-            System.out.println(4-2);
-            System.out.println(7*7);
-            System.out.println(49/7);
-            System.out.println(6 > 5);
-            System.out.println(6 < 5);
-            System.out.println(6 >= 6);
-            System.out.println(6 <= 7);
-            System.out.println(4 == 3);
-            System.out.println(4 != 3);
-            
-        }
-        {
-            
-            System.out.println("$$$ Testing Assignment: $$$");
-            testInt = 88;
-            testString = "fail";
-            testInt = 152;
-            locationZero = testInt-12;
-            testString = "testMe";
-            System.out.println(testInt);
-            System.out.println(locationZero);
-            System.out.println(testString);
-            
-        }
+        main = new Test();
+        main.test();
+        /*
         {
             
             System.out.println("$$$ Testing arrays: $$$");
@@ -85,19 +54,88 @@ class Test
             X = Y.callMe5(X);
             testBool = Y.callMe7(true, false);
             System.out.println(testBool);
-            X.testMe();
+            X.testPrints();
             Z = new Test3();
             Z.callMe6();
         }
+        */
         return 0;
     }
-
-    public int testMe()
+    
+    // Macro-level testing method
+    public void test()
     {
-        beginvars
-        endvars
-        System.out.println("Called testMe!");
-        return 21;
+    	beginvars
+    	endvars
+    	this.testPrints();
+    	this.testOperators();
+    	this.testAssignment();
+    	return;
+    }
+ 
+ 	// Test ability to print out different types of stuff
+    public void testPrints()
+    {
+    	beginvars
+    	endvars
+    	System.out.println("$$$ Testing println stuff: $$$");
+        System.out.println("testing");
+        System.out.println(42);
+        System.out.println(true);
+        System.out.println(false);
+        System.out.println(this);
+        System.out.println(null);
+        return;
+    }
+    
+    // Test for correct operator functionality
+    public void testOperators()
+    {
+    	beginvars
+    	endvars
+    	System.out.println("$$$ Testing Operators: $$$");
+        System.out.println(1+2);
+        System.out.println(4-2);
+        System.out.println(7*7);
+        System.out.println(49/7);
+        System.out.println(6 > 5);
+        System.out.println(6 < 5);
+        System.out.println(6 >= 6);
+        System.out.println(6 <= 7);
+        System.out.println(4 == 3);
+        System.out.println(4 != 3);
+        return;
+    }
+    
+    // Test that assignment operations work as intended
+    public void testAssignment()
+    {
+    	beginvars
+    		String methString;
+    		int methInt;
+    		int methDerivedInt;
+    		boolean methBool;
+    	endvars
+    	System.out.println("$$$ Testing Assignment: $$$");
+        methInt = 88;
+        methString = "fail";
+        methInt = 152;
+        methString = "testMe";
+        methBool = true;
+        methDerivedInt = methInt - 12;
+        System.out.println(methInt);
+        System.out.println(methDerivedInt);
+        System.out.println(methString);
+        System.out.println(methBool);
+        return;
+    }
+    
+    // Test arrays
+    public void testArrays()
+    {
+    	beginvars
+    	endvars
+    	return;
     }
 }
 
@@ -187,8 +225,8 @@ class Test2
         System.out.println("CallMe5 called!");
         newX = new Test();
         System.out.println(x);
-        newX.testMe();
-        x.testMe();
+        newX.testPrints();
+        x.testPrints();
     	return newX;
     }
 }
@@ -197,6 +235,7 @@ class Test3
 {
     int fieldInt;
     String fieldStr;
+    boolean fieldBool;
 
     // Test ability to find fields
     public int callMe6()
@@ -205,8 +244,10 @@ class Test3
         endvars
         fieldInt = 300;
         fieldStr = "teeeeest";
+        fieldBool = true;
         System.out.println(fieldInt);
         System.out.println(fieldStr);
+        System.out.println(fieldBool);
         return 142;
     }
 }

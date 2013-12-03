@@ -229,7 +229,25 @@ MethodDecl ::= PUBLIC_TOK STATIC_TOK MethodType:type ID_TOK:id LPAREN_TOK
     if (parser.debug)
         System.out.println("MethodDecl -> MethodDeclSimple");
     RESULT = new mjc_MethodDeclSimple(type, new mjc_Identifier(id), list, vdl, kst, e);
+:}
+| PUBLIC_TOK STATIC_TOK MethodType:type ID_TOK:id LPAREN_TOK
+  KleeneFormalList:list RPAREN_TOK LBRACE_TOK BEGINVARS_TOK
+  KleeneVarDeclList:vdl ENDVARS_TOK KleeneStatement:kst
+  RETURN_TOK SEMICOLON_TOK RBRACE_TOK
+{: 
+    if (parser.debug)
+    	System.out.println("MethodDecl -> MethodDeclStatic(void)");
+    RESULT = new mjc_MethodDeclStatic(type, new mjc_Identifier(id), list, vdl, kst, new mjc_IdentifierExp("void"));
+:}
+| PUBLIC_TOK MethodType:type ID_TOK:id LPAREN_TOK KleeneFormalList:list
+    RPAREN_TOK LBRACE_TOK BEGINVARS_TOK KleeneVarDeclList:vdl ENDVARS_TOK
+    KleeneStatement:kst RETURN_TOK SEMICOLON_TOK RBRACE_TOK
+{:
+	if (parser.debug)
+		System.out.println("MethodDecl -> MethodDeclSimple(void)");
+	RESULT = new mjc_MethodDeclSimple(type, new mjc_Identifier(id), list, vdl, kst, new mjc_IdentifierExp("void"));
 :};
+
 
 MethodType ::= VOID_TOK
 {:
@@ -468,7 +486,7 @@ Exp ::= Exp:e1 MUL_TOK Exp:e2
 {:
     if (parser.debug)
         System.out.println("Exp -> this");
-    RESULT = new mjc_This(new mjc_Identifier("myInstance"));
+    RESULT = new mjc_This(new mjc_Identifier("this"));
 :}
 | NEW_TOK INTTYPE_TOK LBRACKET_TOK Exp:e1 RBRACKET_TOK
 {:
