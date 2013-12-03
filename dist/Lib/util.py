@@ -345,8 +345,6 @@ def handleReturn(codeGen, mjc_Method):
 
 """ Create/return CP reference to methodRef entry """    
 def getMethodReference(codeGen, invokedObj): 
-    #print(codeGen.classSym.toString())
-    #print(invokedObj.e.s)
     if isinstance(invokedObj.e, mjc_IdentifierExp):
         variable = getVariable(codeGen, codeGen.classSym, codeGen.methodSym, invokedObj.e.s)
         className = typeConvert(variable.toString())       

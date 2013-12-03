@@ -147,7 +147,7 @@ class CodeGenVisitor(VisitorAdaptor):
         self.expType = EXP_OBJECT
     @vis.when(mjc_CallExpression)
     def visit(self, node):
-        objLocation = getLocation(self, self.classSym, self.methodSym, node.e.s)
+        objLocation = getLocation(self, self.classSym, self.methodSym, typeConvert(node.e.toString()))
         getCall(self, node, objLocation)        
     @vis.when(mjc_ExpList)
     def visit(self, node):
@@ -160,8 +160,19 @@ class CodeGenVisitor(VisitorAdaptor):
             elif self.expType == EXP_INTARRAY:
                 self.expType = EXP_LOCOBJECT
                 self.expList += "[I"
+            elif self.expType == EXP_INTINDEX:
+                self.expList += typeConvert(node.elementAt(x).toString()) 
+            elif (self.expType == EXP_LOCINTIND or self.expType == EXP_LOCSTRIND
+                  or self.expType == EXP_LOCBOOL):
+                var = typeConvert(node.elementAt(x).toString())
+                type = getType(self, self.classSym, self.methodSym, var)
+                self.expList += type
             elif self.expType == EXP_LOCOBJECT:
                 self.expList += getObjType(self, self.classSym, self.methodSym, node.elementAt(x).s)
+            elif (isinstance(node.elementAt(x), mjc_This)):
+                self.expList += ("L" + self.classSym.toString() + ";")
+                self.expType = EXP_LOCOBJECT;
+                self.expIndex = 0
             else:
                 self.expList += typeConvert(node.elementAt(x).toString())                
             pushToStack(self, self.expType, self.expIndex, None)
