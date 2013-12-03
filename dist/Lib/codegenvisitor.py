@@ -177,7 +177,24 @@ class CodeGenVisitor(VisitorAdaptor):
                 self.expList += typeConvert(node.elementAt(x).toString())                
             pushToStack(self, self.expType, self.expIndex, None)
         self.expList += ")"
-    
+    @vis.when(mjc_Not)
+    def visit(self, node):
+        print("Not!")
+        node.e.accept(self)
+        # ifeq <branch past 'push 1'>
+        self.code.add(0x99)
+        self.code.add(0x00)
+        self.code.add(0x08)
+        # bipush 0
+        self.code.add(0x10)
+        self.code.add(0x00)
+        # goto +3
+        self.code.add(0xa7)
+        self.code.add(0x00)
+        self.code.add(0x03)
+        # bipush 1
+        self.code.add(0x10)
+        self.code.add(0x01)
     
     
     """ Statement visitor methods """

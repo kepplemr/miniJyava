@@ -211,6 +211,16 @@ class Test
     		System.out.println("If Exp was evaluated false");
     		System.out.println("4 is not greater than 5");
     	}
+    	if (!(4 > 5))
+    	{
+    		System.out.println("Not was evaulated true");
+    		System.out.println("4 is not greater than 5");
+    	}
+    	else
+    	{
+    		System.out.println("Not was evaluated false");
+    		System.out.println("4 is not not greater than 5");
+    	}
     	return;
     }
 }
