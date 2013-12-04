@@ -1,0 +1,387 @@
+class Test
+{
+	String fieldStr;
+
+	// Getter for fieldStr field	
+	public String getFieldStr()
+	{
+		beginvars
+		endvars
+		return fieldStr;
+	}
+	
+	// Setter for fieldStr field
+	public void setFieldStr(String setMe)
+	{
+		beginvars
+		endvars
+		fieldStr = setMe;
+		return;
+	}
+	
+	// Main program method
+    public static void main(String[] args)
+    {
+        beginvars
+        	Test main;
+        endvars
+        {
+        	// because nested blocks are cool.
+        	{
+        		main = new Test();
+        		main.test();
+        	}
+        }
+        return 0;
+    }
+    
+    // Macro-level testing method
+    public void test()
+    {
+    	beginvars
+    	endvars
+    	this.testPrints();
+    	this.testOperators();
+    	this.testAssignment();
+    	this.testArrays();
+    	this.testObjects();
+    	this.testIfsAndNots();
+    	this.testExtraCredit();
+    	return;
+    }
+ 
+ 	// Test ability to print out different types of stuff
+    public void testPrints()
+    {
+    	beginvars
+    	endvars
+    	System.out.println("$$$ Testing println stuff: $$$");
+        System.out.println("testing");
+        System.out.println(42);
+        System.out.println(true);
+        System.out.println(false);
+        System.out.println(this);
+        System.out.println(null);
+        return;
+    }
+    
+    // Test for correct operator functionality
+    public void testOperators()
+    {
+    	beginvars
+    	endvars
+    	System.out.println("$$$ Testing Operators: $$$");
+        System.out.println(1+2);
+        System.out.println(4-2);
+        System.out.println(7*7);
+        System.out.println(49/7);
+        System.out.println(6 > 5);
+        System.out.println(6 < 5);
+        System.out.println(6 >= 6);
+        System.out.println(6 <= 7);
+        System.out.println(4 == 3);
+        System.out.println(4 != 3);
+        return;
+    }
+    
+    // Test that assignment operations work as intended
+    public void testAssignment()
+    {
+    	beginvars
+    		String methString;
+    		int methInt;
+    		int methDerivedInt;
+    		boolean methBool;
+    	endvars
+    	System.out.println("$$$ Testing Assignment: $$$");
+        methInt = 88;
+        methString = "fail";
+        methInt = 152;
+        methString = "testMe";
+        methBool = true;
+        methDerivedInt = methInt - 12;
+        System.out.println(methInt);
+        System.out.println(methDerivedInt);
+        System.out.println(methString);
+        System.out.println(methBool);
+        return;
+    }
+    
+    // Test arrays
+    public void testArrays()
+    {
+    	beginvars
+    		int[] methIntArr;
+    		int methInt;
+    		String[] methStrArr;
+    		String methString;
+    	endvars
+    	System.out.println("$$$ Testing arrays: $$$");
+        methIntArr = new int[5];
+        methIntArr[1] = 7;
+        methInt = methIntArr[1];
+        System.out.println(methInt);
+        methStrArr = new String[5];
+        methStrArr[2] = "seven";
+        methString = methStrArr[2];
+        System.out.println(methString);
+    	return;
+    }
+    
+    // Test objects and method passing & return of types
+    public void testObjects()
+    {
+    	beginvars
+    		PassMeThings testPass;
+    		int methInt;
+    		int x;
+    		int y;
+    		String methString;
+    		String s1;
+    		String s2;
+    		String[] methStrArr;
+    		int[] methIntArr;
+    		boolean bool;
+    		boolean t;
+    		boolean f;
+    		Test X;
+    		Test Y;
+    	endvars
+    	x = 1;
+    	y = 2;
+    	s1 = "one";
+    	s2 = "two";
+    	t = true;
+    	f = false;
+    	methStrArr = new String[5];
+    	methIntArr = new int[5];
+    	methIntArr[1] = 42;
+    	System.out.println("$$$ Testing objects: $$$");
+    	testPass = new PassMeThings();
+    	methInt = testPass.intPass(140, 42);
+    	System.out.println(methInt);
+    	methInt = testPass.intPass(x, y);
+    	System.out.println(methInt);
+    	methString = testPass.strPass("testing", "another");
+    	System.out.println(methString);
+    	methString = testPass.strPass(s1, s2);
+    	System.out.println(methString);
+    	methStrArr[3] = "tux";
+    	methStrArr = testPass.strArrPass(methStrArr);
+    	System.out.println(methStrArr[0]);
+    	System.out.println(methStrArr[1]);
+    	System.out.println(methStrArr[2]);
+    	System.out.println(methStrArr[3]);
+    	System.out.println(methStrArr[4]);
+    	methIntArr = testPass.intArrPass(methIntArr);
+    	System.out.println(methIntArr[1]);
+    	bool = testPass.boolPass(false, true);
+    	System.out.println(bool);
+    	bool = testPass.boolPass(t, f);
+    	System.out.println(bool);
+    	fieldStr = "setting string field initially";
+    	System.out.println(fieldStr);
+    	methString = this.getFieldStr();
+    	System.out.println(methString);
+    	X = new Test();
+    	X.setFieldStr("cheese");
+    	methString = X.getFieldStr();
+    	System.out.println(methString);
+    	X = testPass.objPass(this);
+    	methString = X.getFieldStr();
+    	System.out.println(methString);
+    	Y = new Test();
+    	Y = testPass.objPass(X);
+    	methString = Y.getFieldStr();
+    	System.out.println(methString);
+    	return;
+    }
+    
+    // Test proper functionality of if (and not) statements with all types
+    public void testIfsAndNots()
+    {
+    	beginvars
+    		boolean testBool;
+    	endvars
+    	testBool = true;
+    	System.out.println("$$$ Testing Ifs and NOTS: $$$");
+    	if (4 > 5)
+    	{
+    		System.out.println("If Exp was evaluated true");
+    		System.out.println("4 is greater than 5?");
+    	}
+    	else
+    	{
+    		System.out.println("If Exp was evaluated false");
+    		System.out.println("4 is not greater than 5");
+    	}
+    	if (testBool)
+    		System.out.println("Testbool was true");
+    	else
+    		System.out.println("Testbool was false");
+    	if (!(4 > 5))
+    		System.out.println("4 is NOT greater than 5");
+    	else
+    		System.out.println("4 is NOT not greater than 5");
+    	if (!(true))
+    		System.out.println("Not true is true?");
+    	else
+    		System.out.println("Not true is false.");
+    	return;
+    }
+    
+    // Test AND and OR statements
+    public void testExtraCredit()
+    {
+    	beginvars
+    		boolean bool1;
+    		boolean bool2;
+    	endvars
+    	// Test ANDs
+    	System.out.println("$$$ Testing EXTRA CREDIT stuff: $$$");
+    	if (true && true)
+    		System.out.println("True and true is true");
+    	else
+    		System.out.println("True and true is false?");
+    	bool1 = true;
+    	bool2 = false;
+    	if (bool1 && bool2)
+    		System.out.println("Bool1 and Bool2");
+    	else
+    		System.out.println("Bool1 and Bool2 is not true");
+    	if ((2 > 1) && (4 < 7))
+    		System.out.println("Both are true");
+    	else
+    		System.out.println("Both are not true");
+    	if ((2 < 1) && (4 < 7))
+    		System.out.println("Both are true");
+    	else
+    		System.out.println("Both are not true");
+    	// Test ORs
+    	if (bool1 || bool2)
+    		System.out.println("True or false is true");
+    	else
+    		System.out.println("True or false is false?");
+        if (false || false)
+        	System.out.println("False or false is false?");
+        else
+        	System.out.println("False or false is false.");
+        if ((1 > 2) || (43 < 87))
+        	System.out.println("At least one is true,");
+        else
+        	System.out.println("None are true.");
+    	return;
+    }
+}
+
+class PassMeThings
+{
+    // Test ability to call and return ints
+    public int intPass(int i0, int i1)
+    {
+        beginvars
+            int i3;
+        endvars
+        i3 = 343;
+        System.out.println("intPass Called!");
+        System.out.println(i0);
+        System.out.println(i1);
+        return i3;
+    }
+
+    // Test ability to call and return strings
+    public String strPass(String test, String s2)
+    {
+        beginvars
+            int i1;
+        endvars
+        System.out.println("strPass Called!");
+        System.out.println(test);
+        test = "string return";
+        System.out.println(test);
+        return test;
+    }
+
+    // Test ability to pass and return String[]'s
+    public String[] strArrPass(String[] test)
+    {
+        beginvars
+            String[] strArr;
+        endvars
+        System.out.println("strArrPass Called!");
+        System.out.println(test[3]);
+        strArr = new String[5];
+        strArr[0] = "1st element";
+        strArr[1] = "2nd element";
+        strArr[2] = "3rd element";
+        strArr[3] = "4th element";
+        strArr[4] = "5th element";
+        return strArr;
+    }
+
+    // Test ability to pass and return int[]'s
+    public int[] intArrPass(int[] test)
+    {
+        beginvars
+        	int[] iA;
+        endvars
+        System.out.println("CallMe4 Called!");
+        System.out.println(test[1]);
+        iA = new int[5];
+        iA[0] = 34;
+        iA[1] = 32;
+        return iA;
+    }
+    
+    // Test ability to pass and return bools
+    public boolean boolPass(boolean b1, boolean b2)
+    {
+    	beginvars
+    		boolean bool1;
+    		boolean bool2;
+    	endvars
+    	bool1 = true;
+    	bool2 = false;
+    	System.out.println("boolPass Called!");
+    	System.out.println(bool1);
+    	System.out.println(bool2);
+    	System.out.println(b1);
+    	System.out.println(b2);
+    	return false;
+    }
+    
+    // Test ability to pass and return Objects
+    public Test objPass(Test x)
+    {
+    	beginvars
+            String methString;
+            Test newX;
+    	endvars
+    	methString = x.getFieldStr();
+        System.out.println(methString);
+        newX = new Test();
+        newX.setFieldStr("donut");
+    	return newX;
+    }
+}
+
+class Test3
+{
+    int fieldInt;
+    String fieldStr;
+    boolean fieldBool;
+
+    // Test ability to find fields
+    public int callMe6()
+    {
+        beginvars
+        endvars
+        fieldInt = 300;
+        fieldStr = "teeeeest";
+        fieldBool = true;
+        System.out.println(fieldInt);
+        System.out.println(fieldStr);
+        System.out.println(fieldBool);
+        return 142;
+    }
+}
