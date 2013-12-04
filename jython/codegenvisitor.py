@@ -215,9 +215,7 @@ class CodeGenVisitor(VisitorAdaptor):
         if (isinstance(node.e2, mjc_IdentifierExp)):
             pushToStack(self, self.expType, self.expIndex, None)
         # ior
-        self.code.add(0x80)        
-    
-    
+        self.code.add(0x80)            
     
     """ Statement visitor methods """
     @vis.when(mjc_If)
