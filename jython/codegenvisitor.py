@@ -224,9 +224,7 @@ class CodeGenVisitor(VisitorAdaptor):
         self.code.add(arrLocation)
         # arraylength
         self.code.add(0xbe)
-        self.expType = EXP_OBJECT
-        print("Location -> " + repr(arrLocation))
-        print("Array length!");         
+        self.expType = EXP_OBJECT       
     
     """ Statement visitor methods """
     @vis.when(mjc_While)
@@ -243,7 +241,6 @@ class CodeGenVisitor(VisitorAdaptor):
         codeCopy.add(self.code.size()+6)
         codeCopy.addAll(self.code)
         # branch back up to ifne check
-        print(repr(codeCopy.size()))
         goBack = -(self.code.size()+17)
         codeCopy.add(0xa7)
         codeCopy.add(0xff)

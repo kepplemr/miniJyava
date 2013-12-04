@@ -46,15 +46,13 @@ public class Main
 		    interpreter.setOut(out);
 		    interpreter.setErr(out);
 			interpreter.exec("import sys");
-			//interpreter.exec("print(sys.path)");
 			interpreter.exec("from codegenvisitor import CodeGenVisitor");
-			//interpreter.exec("print(sys.modules.keys())");
 			PyObject genCode = interpreter.get("CodeGenVisitor");
 			PyObject codeGen = genCode.__call__();
 			Visitor pyVis = (Visitor) codeGen.__tojava__(Visitor.class);
 			p.parsetreeRoot.accept(pyVis);
 			System.out.println(out.toString());
-			System.out.println("endCat");
+			System.out.println("Compilation successful");
 		} 
 		catch (Exception e) 
 		{
