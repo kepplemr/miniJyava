@@ -200,6 +200,7 @@ def pushToStack(codeGen, type, value, arrayType):
         
 
 """ Handles storing stuff to locals according to type """
+# BOOLVAL & IDENTIFIER & IMMBOOL
 def popToLocal(codeGen, type, location):
     if (type == EXP_FIELD_INT or type == EXP_FIELD_STRING or 
         type == EXP_FIELD_OBJECT  or type == EXP_FIELD_BOOL):        

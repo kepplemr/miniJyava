@@ -215,7 +215,18 @@ class CodeGenVisitor(VisitorAdaptor):
         if (isinstance(node.e2, mjc_IdentifierExp)):
             pushToStack(self, self.expType, self.expIndex, None)
         # ior
-        self.code.add(0x80)            
+        self.code.add(0x80)
+    @vis.when(mjc_ArrayLength)
+    def visit(self, node):
+        arrLocation = getLocation(self, self.classSym, self.methodSym, node.e.s)
+        # aload <arrLocation>
+        self.code.add(0x19)
+        self.code.add(arrLocation)
+        # arraylength
+        self.code.add(0xbe)
+        self.expType = EXP_OBJECT
+        print("Location -> " + repr(arrLocation))
+        print("Array length!");         
     
     """ Statement visitor methods """
     @vis.when(mjc_While)
@@ -238,7 +249,6 @@ class CodeGenVisitor(VisitorAdaptor):
         codeCopy.add(0xff)
         codeCopy.add(goBack)
         self.code = ArrayList(codeCopy)
-        print("while loop!")
     @vis.when(mjc_If)
     def visit(self, node):
         node.e.accept(self)

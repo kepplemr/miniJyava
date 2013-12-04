@@ -126,6 +126,9 @@ class Test
         methStrArr[2] = "seven";
         methString = methStrArr[2];
         System.out.println(methString);
+        // Test array length is working properly
+        methInt = methStrArr.length;
+        System.out.println(methInt);
     	return;
     }
     

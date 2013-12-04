@@ -9,6 +9,7 @@ public class Test
 
     public Test()
     {
-        test = 42;
+        int[] test = new int[5];
+        int x = test.length;
     }
 }
