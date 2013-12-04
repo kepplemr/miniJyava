@@ -46,6 +46,7 @@ class Test
     	this.testArrays();
     	this.testObjects();
     	this.testIfsAndNots();
+    	this.testLoops();
     	this.testExtraCredit();
     	return;
     }
@@ -227,6 +228,22 @@ class Test
     		System.out.println("Not true is true?");
     	else
     		System.out.println("Not true is false.");
+    	return;
+    }
+    
+    // Test while loops
+    public void testLoops()
+    {
+    	beginvars
+    		int i;
+    	endvars
+    	System.out.println("$$$ Testing loop stuff: $$$");
+    	i = 10;
+    	while (i > 0)
+  		{
+    		System.out.println("hello");
+    		i = i - 1;
+    	}
     	return;
     }
     

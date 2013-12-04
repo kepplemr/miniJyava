@@ -218,6 +218,27 @@ class CodeGenVisitor(VisitorAdaptor):
         self.code.add(0x80)            
     
     """ Statement visitor methods """
+    @vis.when(mjc_While)
+    def visit(self, node):
+        node.e.accept(self)
+        if (isinstance(node.e, mjc_IdentifierExp)):
+            pushToStack(self, self.expType, self.expIndex, None)
+        codeCopy = ArrayList(self.code)
+        self.code.clear()
+        node.s.accept(self)
+        # ifeq <branch out of loop>
+        codeCopy.add(0x99)
+        codeCopy.add(0x00)
+        codeCopy.add(self.code.size()+6)
+        codeCopy.addAll(self.code)
+        # branch back up to ifne check
+        print(repr(codeCopy.size()))
+        goBack = -(self.code.size()+17)
+        codeCopy.add(0xa7)
+        codeCopy.add(0xff)
+        codeCopy.add(goBack)
+        self.code = ArrayList(codeCopy)
+        print("while loop!")
     @vis.when(mjc_If)
     def visit(self, node):
         node.e.accept(self)
