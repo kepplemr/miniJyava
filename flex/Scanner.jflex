@@ -33,7 +33,6 @@ import java_cup.runtime.*;
 LineTerminator  = \r|\n|\r\n
 WhiteSpace      = {LineTerminator} | [ \t\f]
 Integer         = [0-9]+
-String          = \".*\"
 ID              = [:jletter:][:jletterdigit:]*
 Comment  = "/*" [^*] ~"*/" | "//" .* {LineTerminator}
 
@@ -82,6 +81,7 @@ StringCharacter = [^\r\n\"\\]
     "."                     {return symbol(DOT_TOK); }
     "="                     {return symbol(ASSIGN_TOK); }
     "&&"                    {return symbol(AND_TOK); }
+    "||"                    {return symbol(OR_TOK); }
     "=="                    {return symbol(EQ_TOK); }
     "!="                    {return symbol(NEQ_TOK); }
     ">="                    {return symbol(GTEQ_TOK); }

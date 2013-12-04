@@ -64,6 +64,7 @@ non terminal mjc_Exp             Exp;
 non terminal mjc_ExpList         ExpList;
 non terminal mjc_ExpList         KleeneExpList;
 // Precedence specifications
+precedence left AND_TOK, BANG_TOK;
 precedence left EQ_TOK, NEQ_TOK, GTEQ_TOK, LTEQ_TOK, GT_TOK, LT_TOK;
 precedence left PLUS_TOK, MINUS_TOK;
 precedence left MUL_TOK, DIV_TOK;
@@ -373,6 +374,18 @@ Exp ::= Exp:e1 MUL_TOK Exp:e2
     if (parser.debug)
         System.out.println("Exp -> Exp * Exp");
     RESULT = new mjc_Mult(e1, e2);
+:}
+| Exp:e1 AND_TOK Exp:e2
+{:
+	if (parser.debug)
+		System.out.println("Exp -> Exp && Exp");
+	RESULT = new mjc_And(e1, e2);
+:}
+| Exp:e1 OR_TOK Exp:e2
+{:
+	if (parser.debug)
+		System.out.println("Exp -> Exp || Exp");
+	RESULT = new mjc_Or(e1, e2);
 :}
 | Exp:e1 PLUS_TOK Exp:e2
 {:

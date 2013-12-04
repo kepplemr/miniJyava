@@ -45,7 +45,8 @@ class Test
     	this.testAssignment();
     	this.testArrays();
     	this.testObjects();
-    	this.testIfs();
+    	this.testIfsAndNots();
+    	this.testExtraCredit();
     	return;
     }
  
@@ -196,11 +197,14 @@ class Test
     	return;
     }
     
-    public void testIfs()
+    // Test proper functionality of if (and not) statements with all types
+    public void testIfsAndNots()
     {
     	beginvars
+    		boolean testBool;
     	endvars
-    	System.out.println("$$$ Testing Ifs: $$$");
+    	testBool = true;
+    	System.out.println("$$$ Testing Ifs and NOTS: $$$");
     	if (4 > 5)
     	{
     		System.out.println("If Exp was evaluated true");
@@ -211,16 +215,55 @@ class Test
     		System.out.println("If Exp was evaluated false");
     		System.out.println("4 is not greater than 5");
     	}
-    	if (!(4 > 5))
-    	{
-    		System.out.println("Not was evaulated true");
-    		System.out.println("4 is not greater than 5");
-    	}
+    	if (testBool)
+    		System.out.println("Testbool was true");
     	else
-    	{
-    		System.out.println("Not was evaluated false");
-    		System.out.println("4 is not not greater than 5");
-    	}
+    		System.out.println("Testbool was false");
+    	if (!(4 > 5))
+    		System.out.println("4 is NOT greater than 5");
+    	else
+    		System.out.println("4 is NOT not greater than 5");
+    	if (!(true))
+    		System.out.println("Not true is true?");
+    	else
+    		System.out.println("Not true is false.");
+    	return;
+    }
+    
+    // Test AND and OR statements
+    public void testExtraCredit()
+    {
+    	beginvars
+    		boolean bool1;
+    		boolean bool2;
+    	endvars
+    	// Test ANDs
+    	System.out.println("$$$ Testing EXTRA CREDIT stuff: $$$");
+    	if (true && true)
+    		System.out.println("True and true is true");
+    	else
+    		System.out.println("True and true is false?");
+    	bool1 = true;
+    	bool2 = false;
+    	if (bool1 && bool2)
+    		System.out.println("Bool1 and Bool2");
+    	else
+    		System.out.println("Bool1 and Bool2 is not true");
+    	if ((2 > 1) && (4 < 7))
+    		System.out.println("Both are true");
+    	else
+    		System.out.println("Both are not true");
+    	if ((2 < 1) && (4 < 7))
+    		System.out.println("Both are true");
+    	else
+    		System.out.println("Both are not true");
+    		
+    	// Test ORs
+    	
+    	if (true || false)
+    		System.out.println("True or false is true");
+    	else
+    		System.out.println("True or false is false?");
     	return;
     }
 }

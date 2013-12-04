@@ -59,4 +59,3 @@ public interface sym {
   public static final int MUL_TOK = 34;
   public static final int OR_TOK = 48;
 }
-

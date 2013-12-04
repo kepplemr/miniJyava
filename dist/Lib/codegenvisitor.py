@@ -179,8 +179,9 @@ class CodeGenVisitor(VisitorAdaptor):
         self.expList += ")"
     @vis.when(mjc_Not)
     def visit(self, node):
-        print("Not!")
         node.e.accept(self)
+        if (isinstance(node.e, mjc_IdentifierExp)):
+            pushToStack(self, self.expType, self.expIndex, None)
         # ifeq <branch past 'push 1'>
         self.code.add(0x99)
         self.code.add(0x00)
@@ -191,16 +192,28 @@ class CodeGenVisitor(VisitorAdaptor):
         # goto +3
         self.code.add(0xa7)
         self.code.add(0x00)
-        self.code.add(0x03)
+        self.code.add(0x05)
         # bipush 1
         self.code.add(0x10)
         self.code.add(0x01)
+    @vis.when(mjc_And)
+    def visit(self, node):
+        node.e1.accept(self)
+        if (isinstance(node.e1, mjc_IdentifierExp)):
+            pushToStack(self, self.expType, self.expIndex, None)
+        node.e2.accept(self)
+        if (isinstance(node.e2, mjc_IdentifierExp)):
+            pushToStack(self, self.expType, self.expIndex, None)
+        self.code.add(0x7e)
+    
     
     
     """ Statement visitor methods """
     @vis.when(mjc_If)
     def visit(self, node):
         node.e.accept(self)
+        if (isinstance(node.e, mjc_IdentifierExp)):
+            pushToStack(self, self.expType, self.expIndex, None)
         codeCopy = ArrayList(self.code)
         self.code.clear()
         node.s1.accept(self)
