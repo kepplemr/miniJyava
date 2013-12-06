@@ -30,11 +30,6 @@ public class Main
 			System.out.println("File not found : \"" + argv[0] + "\"");
 			System.exit(1);
 		} 
-		catch (java.io.IOException e) 
-		{
-			System.out.println("Error opening file \"" + argv[0] + "\"");
-			System.exit(1);
-		} 
 		catch (ArrayIndexOutOfBoundsException e) 
 		{
 			System.out.println("Usage : java Main <inputfile>");
@@ -42,22 +37,22 @@ public class Main
 		}
 		try 
 		{
-			Parser p = new Parser(scanner, true); // debug printfs: true/false
-			p.parse();			
+			Parser p = new Parser(scanner, false);
+			p.parse();	
+			SymTabVisitor sv = new SymTabVisitor();
+			p.parsetreeRoot.accept(sv);
 			PythonInterpreter interpreter = new PythonInterpreter();
 		    ByteArrayOutputStream out = new ByteArrayOutputStream();
 		    interpreter.setOut(out);
 		    interpreter.setErr(out);
 			interpreter.exec("import sys");
-			//interpreter.exec("print(sys.path)");
-			interpreter.exec("from CodeGenVisitor import CodeGenVisitor");
-			//interpreter.exec("print(sys.modules.keys())");
+			interpreter.exec("from codegenvisitor import CodeGenVisitor");
 			PyObject genCode = interpreter.get("CodeGenVisitor");
 			PyObject codeGen = genCode.__call__();
 			Visitor pyVis = (Visitor) codeGen.__tojava__(Visitor.class);
 			p.parsetreeRoot.accept(pyVis);
 			System.out.println(out.toString());
-			System.out.println("endCat");
+			System.out.println("Compilation successful");
 		} 
 		catch (Exception e) 
 		{
